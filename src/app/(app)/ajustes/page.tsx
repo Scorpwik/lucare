@@ -1,0 +1,12 @@
+  rutina_am: "Rutina mañana",
+  pastillas: "Pastillas",
+  citas: "Citas",
+  gimnasio: "Gimnasio",
+  cuerpo_resumen: "Cuerpo",
+  sueno: "Sueño",
+  habitos_racha: "Hábitos (racha)",
+  animo: "Ánimo",
+  cuidado_personal: "Cuidado personal",
+  agenda: "Agenda",
+  tareas: "Tareas",
+};
