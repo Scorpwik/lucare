@@ -16,6 +16,7 @@ export type IntegrationProvider = CalendarProvider;
 
 export type WidgetKey =
   | "saludo"
+  | "ia_insight"
   | "bloqueador"
   | "rutina_am"
   | "pastillas"
@@ -28,6 +29,37 @@ export type WidgetKey =
   | "habitos_racha"
   | "animo"
   | "cuidado_personal";
+
+export type HealthSampleSource = "samsung_health" | "health_connect" | "import" | "manual";
+
+export interface DailyActivity {
+  id: string;
+  user_id: string;
+  activity_date: string;
+  steps: number | null;
+  source: HealthSampleSource;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HeartRateSample {
+  id: string;
+  user_id: string;
+  recorded_at: string;
+  bpm: number;
+  source: HealthSampleSource;
+  created_at: string;
+}
+
+export interface AiDailyInsight {
+  id: string;
+  user_id: string;
+  insight_date: string;
+  content: string;
+  is_demo: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface Profile {
   id: string;

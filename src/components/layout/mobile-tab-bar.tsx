@@ -20,6 +20,7 @@ const primaryTabs = [
 ] as const;
 
 const moreLinks = [
+  { href: "/asistente", label: "Asistente" },
   { href: "/cuidado-personal", label: "Cuidado personal" },
   { href: "/cuerpo", label: "Cuerpo" },
   { href: "/sueno-habitos", label: "Sueño y hábitos" },

@@ -1,3 +1,4 @@
+import { HealthImportPanel } from "@/components/ajustes/health-import-panel";
 import { PushSettingsPanel } from "@/components/ajustes/push-settings-panel";
 import { IntegrationPanel } from "@/components/agenda/integration-panel";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -7,6 +8,7 @@ import type { WidgetKey } from "@/lib/types";
 
 const widgetLabels: Record<WidgetKey, string> = {
   saludo: "Saludo",
+  ia_insight: "Insight IA",
   bloqueador: "Bloqueador",
   rutina_am: "Rutina mañana",
   pastillas: "Pastillas",
@@ -55,6 +57,8 @@ export async function AjustesContent({
       <PushSettingsPanel />
 
       <IntegrationPanel initial={statuses} />
+
+      <HealthImportPanel />
 
       <GlassCard className="p-4 mt-4">
         <p className="silk mb-2">widgets · referencia</p>

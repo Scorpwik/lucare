@@ -14,6 +14,7 @@ import { SuenoWidget } from "@/components/hoy/widgets/sueno-widget";
 import { HabitosRachaWidget } from "@/components/hoy/widgets/habitos-racha-widget";
 import { AnimoWidget } from "@/components/hoy/widgets/animo-widget";
 import { CuidadoPersonalWidget } from "@/components/hoy/widgets/cuidado-personal-widget";
+import { IaInsightWidget } from "@/components/hoy/widgets/ia-insight-widget";
 import { fetchDashboardWidgets } from "@/lib/data/dashboard";
 import type { WidgetKey } from "@/lib/types";
 
@@ -22,6 +23,11 @@ export async function HoyPageContent() {
 
   const childrenMap: Record<WidgetKey, React.ReactNode> = {
     saludo: <SaludoWidget />,
+    ia_insight: (
+      <Suspense fallback={<LoadingState />}>
+        <IaInsightWidget />
+      </Suspense>
+    ),
     bloqueador: <BloqueadorWidget />,
     rutina_am: (
       <Suspense fallback={<LoadingState />}>

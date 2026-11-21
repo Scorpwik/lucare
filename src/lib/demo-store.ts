@@ -14,6 +14,9 @@ import type {
   ProgressPhoto,
   SkincareRoutine,
   SkincareStep,
+  AiDailyInsight,
+  DailyActivity,
+  HeartRateSample,
   SleepLog,
   Task,
   WidgetKey,
@@ -51,6 +54,9 @@ export interface DemoState {
   personalCareRoutines: PersonalCareRoutine[];
   personalCareSteps: PersonalCareStep[];
   activeWorkoutSessionId: string | null;
+  dailyActivities: DailyActivity[];
+  heartRateSamples: HeartRateSample[];
+  aiDailyInsights: AiDailyInsight[];
 }
 
 function uid(): string {
@@ -64,6 +70,7 @@ function nowIso(): string {
 function defaultWidgets(): DashboardWidget[] {
   const keys: WidgetKey[] = [
     "saludo",
+    "ia_insight",
     "bloqueador",
     "rutina_am",
     "pastillas",
@@ -717,6 +724,42 @@ export function createDefaultDemoState(): DemoState {
     personalCareRoutines: personal.routines,
     personalCareSteps: personal.steps,
     activeWorkoutSessionId: gym.sessions[0]?.id ?? null,
+    dailyActivities: [],
+    heartRateSamples: [],
+    aiDailyInsights: [],
+  };
+}
+
+function mergeDemoState(partial: DemoState): DemoState {
+  const widgets = partial.widgets ?? [];
+  const hasInsight = widgets.some((w) => w.widget_key === "ia_insight");
+  const nextWidgets = hasInsight
+    ? widgets
+    : [
+        ...widgets.filter((w) => w.widget_key === "saludo"),
+        {
+          id: uid(),
+          user_id: partial.userId ?? DEMO_USER_ID,
+          widget_key: "ia_insight" as const,
+          visible: true,
+          sort_order: 1,
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+        ...widgets
+          .filter((w) => w.widget_key !== "saludo")
+          .map((w) => ({
+            ...w,
+            sort_order: w.sort_order >= 1 ? w.sort_order + 1 : w.sort_order,
+          })),
+      ];
+
+  return {
+    ...partial,
+    widgets: nextWidgets.length ? nextWidgets : defaultWidgets(),
+    dailyActivities: partial.dailyActivities ?? [],
+    heartRateSamples: partial.heartRateSamples ?? [],
+    aiDailyInsights: partial.aiDailyInsights ?? [],
   };
 }
 
@@ -727,7 +770,7 @@ function loadFromStorage(): DemoState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as DemoState;
+    return mergeDemoState(JSON.parse(raw) as DemoState);
   } catch {
     return null;
   }

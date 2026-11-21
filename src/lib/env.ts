@@ -24,6 +24,8 @@ const envSchema = z.object({
   NOTION_DEBERES_DB_ID: z.string().optional(),
   INTEGRATION_SYNC_SECRET: z.string().optional(),
   INTEGRATION_TOKEN_ENCRYPTION_KEY: z.string().optional(),
+  AI_GATEWAY_API_KEY: z.string().optional(),
+  AI_GATEWAY_MODEL: z.string().optional(),
 });
 
 function parseEnv() {
@@ -46,7 +48,22 @@ function parseEnv() {
     NOTION_DEBERES_DB_ID: process.env.NOTION_DEBERES_DB_ID,
     INTEGRATION_SYNC_SECRET: process.env.INTEGRATION_SYNC_SECRET,
     INTEGRATION_TOKEN_ENCRYPTION_KEY: process.env.INTEGRATION_TOKEN_ENCRYPTION_KEY,
+    AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
+    AI_GATEWAY_MODEL: process.env.AI_GATEWAY_MODEL,
   });
+}
+
+/** Modelo por defecto del AI Gateway — económico y verificado en el catálogo. */
+export const DEFAULT_AI_GATEWAY_MODEL = "amazon/nova-micro";
+
+export function aiGatewayConfigured(): boolean {
+  const key = env.AI_GATEWAY_API_KEY ?? process.env.AI_GATEWAY_API_KEY;
+  return Boolean(key && key.length > 8 && !key.startsWith("tu-"));
+}
+
+export function resolveAiModel(): string {
+  const configured = env.AI_GATEWAY_MODEL ?? process.env.AI_GATEWAY_MODEL;
+  return configured?.trim() || DEFAULT_AI_GATEWAY_MODEL;
 }
 
 export const env = parseEnv();
