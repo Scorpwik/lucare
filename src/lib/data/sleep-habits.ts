@@ -1,7 +1,10 @@
 import { getServerDemoState } from "@/lib/demo-store";
 import { isDemoMode } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
+import { computeStreak, computeStreakToDate } from "@/lib/habit-streak";
 import type { Habit, HabitLog, SleepLog } from "@/lib/types";
+
+export { computeStreak, computeStreakToDate };
 
 export type SleepLogInput = {
   sleep_date: string;
@@ -10,6 +13,16 @@ export type SleepLogInput = {
   hours_slept?: number | null;
   quality_score?: number | null;
   notes?: string | null;
+};
+
+export type HabitInput = {
+  title: string;
+  icon?: string | null;
+  sort_order?: number;
+  reminder_enabled: boolean;
+  reminder_start_time?: string | null;
+  reminder_end_time?: string | null;
+  reminder_interval_minutes?: number | null;
 };
 
 export async function fetchSleepLogs(limit = 14): Promise<SleepLog[]> {
@@ -114,27 +127,98 @@ export async function fetchHabitLogs(): Promise<HabitLog[]> {
   return (data ?? []) as HabitLog[];
 }
 
-export function computeStreak(
-  habitId: string,
-  logs: HabitLog[],
-  anchorDate?: string,
-): number {
-  const dates = new Set(
-    logs.filter((l) => l.habit_id === habitId && l.completed).map((l) => l.log_date),
-  );
-  const habitDates = [...dates].sort();
-  const anchor = anchorDate ?? habitDates.at(-1);
-  if (!anchor) return 0;
-  let streak = 0;
-  const [y, m, d] = anchor.split("-").map(Number);
-  const cursor = new Date(y, (m ?? 1) - 1, d ?? 1);
-  for (;;) {
-    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
-    if (!dates.has(key)) break;
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
+export async function upsertHabit(
+  id: string | null,
+  input: HabitInput,
+): Promise<Habit> {
+  if (isDemoMode()) {
+    const t = new Date().toISOString();
+    const state = getServerDemoState();
+    if (id) {
+      const idx = state.habits.findIndex((h) => h.id === id);
+      if (idx >= 0) {
+        state.habits[idx] = {
+          ...state.habits[idx],
+          ...input,
+          icon: input.icon ?? state.habits[idx].icon,
+          reminder_start_time: input.reminder_start_time ?? null,
+          reminder_end_time: input.reminder_end_time ?? null,
+          reminder_interval_minutes: input.reminder_interval_minutes ?? null,
+          updated_at: t,
+        };
+        return state.habits[idx];
+      }
+    }
+    const row: Habit = {
+      id: crypto.randomUUID(),
+      user_id: state.userId,
+      title: input.title,
+      icon: input.icon ?? null,
+      sort_order: input.sort_order ?? state.habits.length,
+      is_active: true,
+      reminder_enabled: input.reminder_enabled,
+      reminder_start_time: input.reminder_start_time ?? null,
+      reminder_end_time: input.reminder_end_time ?? null,
+      reminder_interval_minutes: input.reminder_interval_minutes ?? null,
+      created_at: t,
+      updated_at: t,
+    };
+    state.habits.push(row);
+    return row;
   }
-  return streak;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+  const payload = {
+    ...input,
+    user_id: user.id,
+    icon: input.icon ?? null,
+    reminder_start_time: input.reminder_start_time ?? null,
+    reminder_end_time: input.reminder_end_time ?? null,
+    reminder_interval_minutes: input.reminder_interval_minutes ?? null,
+  };
+  if (id) {
+    const { data, error } = await supabase
+      .from("habits")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as Habit;
+  }
+  const { data, error } = await supabase
+    .from("habits")
+    .insert({ ...payload, sort_order: input.sort_order ?? 0 })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Habit;
+}
+
+export async function deleteHabit(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const state = getServerDemoState();
+    const idx = state.habits.findIndex((h) => h.id === id);
+    if (idx >= 0) {
+      state.habits[idx].is_active = false;
+    }
+    return;
+  }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+  const { error } = await supabase
+    .from("habits")
+    .update({ is_active: false })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) throw error;
 }
 
 export async function toggleHabitLog(

@@ -1,6 +1,16 @@
 import { TIMEZONE } from "@/lib/env";
 import type { ReminderWindow } from "@/lib/types";
 
+/** Fecha local YYYY-MM-DD en America/Guayaquil. */
+export function dateInGuayaquil(ref = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(ref);
+}
+
 function parseTimeToMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + (m ?? 0);

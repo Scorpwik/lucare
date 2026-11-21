@@ -86,6 +86,25 @@ export async function fetchJournalEntries(limit = 20): Promise<JournalEntry[]> {
   return (data ?? []) as JournalEntry[];
 }
 
+export async function deleteJournalEntry(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const state = getServerDemoState();
+    state.journalEntries = state.journalEntries.filter((j) => j.id !== id);
+    return;
+  }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+  const { error } = await supabase
+    .from("journal_entries")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) throw error;
+}
+
 export async function addJournalEntry(body: string): Promise<JournalEntry> {
   if (isDemoMode()) {
     const t = new Date().toISOString();

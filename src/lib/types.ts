@@ -317,6 +317,10 @@ export interface Habit {
   icon: string | null;
   sort_order: number;
   is_active: boolean;
+  reminder_enabled: boolean;
+  reminder_start_time: string | null;
+  reminder_end_time: string | null;
+  reminder_interval_minutes: number | null;
   created_at: string;
   updated_at: string;
 }
