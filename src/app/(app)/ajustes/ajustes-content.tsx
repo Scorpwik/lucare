@@ -47,35 +47,42 @@ export async function AjustesContent({
         <GlassCard className="p-3 mb-4 text-sm border border-border">{banner}</GlassCard>
       )}
 
-      <GlassCard className="p-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="silk mb-1">tema</p>
-          <p className="text-xs text-muted-foreground">Claro, oscuro o según el sistema.</p>
+      <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
+        <GlassCard className="p-4 flex items-center justify-between gap-3 h-fit">
+          <div>
+            <p className="silk mb-1">tema</p>
+            <p className="text-xs text-muted-foreground">Claro, oscuro o según el sistema.</p>
+          </div>
+          <ThemeToggle />
+        </GlassCard>
+
+        <div className="lg:col-span-2">
+          <PushSettingsPanel />
         </div>
-        <ThemeToggle />
-      </GlassCard>
+        <div className="lg:col-span-2">
+          <PasswordSettingsPanel />
+        </div>
+        <div className="lg:col-span-2">
+          <IntegrationPanel initial={statuses} />
+        </div>
+        <div className="lg:col-span-2">
+          <HealthImportPanel />
+        </div>
 
-      <PushSettingsPanel />
-
-      <PasswordSettingsPanel />
-
-      <IntegrationPanel initial={statuses} />
-
-      <HealthImportPanel />
-
-      <GlassCard className="p-4 mt-4">
-        <p className="silk mb-2">widgets · referencia</p>
-        <p className="text-xs text-muted-foreground mb-3">
-          Reordena y oculta widgets desde el panel Hoy (arrastrar / ojo).
-        </p>
-        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono text-muted-foreground">
-          {(Object.keys(widgetLabels) as WidgetKey[]).map((key) => (
-            <li key={key} className="border border-border rounded-[var(--pill)] px-2 py-1">
-              {widgetLabels[key]}
-            </li>
-          ))}
-        </ul>
-      </GlassCard>
+        <GlassCard className="p-4 lg:col-span-2">
+          <p className="silk mb-2">widgets · referencia</p>
+          <p className="text-xs text-muted-foreground mb-3">
+            Reordena y oculta widgets desde el panel Hoy (arrastrar / ojo).
+          </p>
+          <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 text-xs font-mono text-muted-foreground">
+            {(Object.keys(widgetLabels) as WidgetKey[]).map((key) => (
+              <li key={key} className="border border-border rounded-[var(--pill)] px-2 py-1 bg-surface/50">
+                {widgetLabels[key]}
+              </li>
+            ))}
+          </ul>
+        </GlassCard>
+      </div>
     </>
   );
 }

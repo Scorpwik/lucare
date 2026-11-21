@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const lcButtonVariants = cva(
-  "inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-[var(--pill)] cursor-pointer font-medium text-[13px] transition-[transform,box-shadow] duration-[280ms] [transition-timing-function:var(--spring)] focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-[3px] disabled:opacity-45 disabled:cursor-not-allowed disabled:transform-none",
+  "inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-[var(--pill)] cursor-pointer font-medium text-[13px] transition-[transform,box-shadow] duration-180 [transition-timing-function:var(--ease-lift)] focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:opacity-45 disabled:cursor-not-allowed disabled:transform-none motion-reduce:transition-none motion-reduce:hover:translate-y-0",
   {
     variants: {
       variant: {

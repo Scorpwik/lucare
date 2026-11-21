@@ -75,7 +75,9 @@ export function SuenoHabitosPanel({
   const [habits, setHabits] = React.useState(initialHabits);
   const [habitLogs, setHabitLogs] = React.useState(initialHabitLogs);
   const bootDate =
-    initialSleep[0]?.sleep_date ?? new Date().toISOString().slice(0, 10);
+    initialSleep[0]?.sleep_date ??
+    initialHabitLogs[0]?.log_date ??
+    today;
   const bootLog = initialSleep.find((s) => s.sleep_date === bootDate);
   const [sleepForm, setSleepForm] = React.useState(() =>
     sleepFormFromLog(bootLog, bootDate),
@@ -231,8 +233,8 @@ export function SuenoHabitosPanel({
       : habitLogs.some((l) => l.habit_id === habitId && l.log_date === today && l.completed);
 
   return (
-    <div className="grid gap-4">
-      <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 xl:grid-cols-12">
+      <div className="grid gap-4 lg:grid-cols-2 xl:col-span-8">
         <GlassCard className="p-4 space-y-3">
           <p className="silk">sueño</p>
           <p className="font-dot font-black text-4xl tabular-nums text-sleep">

@@ -50,7 +50,7 @@ export function CuidadoPersonalPanel({ routines: initialRoutines, steps }: Props
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(20rem,1fr))]">
       <GlassCard className="p-4 space-y-3">
         <p className="silk">rutinas</p>
         {routines.length === 0 && (

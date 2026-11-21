@@ -32,11 +32,45 @@ import { ErrorState } from "@/components/lucare/error-state";
 import { LoadingState } from "@/components/lucare/loading-state";
 import { LcButton } from "@/components/lucare/lc-button";
 import { Eye, EyeOff, GripVertical } from "lucide-react";
+import { widgetSpanClasses } from "@/lib/widget-spans";
+import { useDndReady } from "@/lib/use-client-time";
 
 type Props = {
   childrenMap: Record<WidgetKey, React.ReactNode>;
   initialWidgets: DashboardWidget[];
 };
+
+function StaticTile({
+  id,
+  visible,
+  onToggle,
+  children,
+}: {
+  id: WidgetKey;
+  visible: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={widgetSpanClasses(id)}>
+      <div className="relative group h-full min-h-0">
+        <div className="absolute -top-1 -right-1 z-10 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+          <LcButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            aria-label={visible ? "Ocultar widget" : "Mostrar widget"}
+            onClick={onToggle}
+          >
+            {visible ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+          </LcButton>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function SortableTile({
   id,
@@ -59,8 +93,12 @@ function SortableTile({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={isDragging ? "z-10" : undefined}>
-      <div className="relative group">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`${widgetSpanClasses(id)} ${isDragging ? "z-10" : ""}`}
+    >
+      <div className="relative group h-full min-h-0">
         <div className="absolute -top-1 -right-1 z-10 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <LcButton
             type="button"
@@ -90,7 +128,60 @@ function SortableTile({
   );
 }
 
+function WidgetGridBody({
+  dndReady,
+  visibleWidgets,
+  orderedKeys,
+  childrenMap,
+  sensors,
+  onDragEnd,
+  onToggle,
+}: {
+  dndReady: boolean;
+  visibleWidgets: DashboardWidget[];
+  orderedKeys: WidgetKey[];
+  childrenMap: Record<WidgetKey, React.ReactNode>;
+  sensors: ReturnType<typeof useSensors>;
+  onDragEnd: (event: DragEndEvent) => void;
+  onToggle: (key: WidgetKey) => void;
+}) {
+  const grid = (
+    <div className="lc-hoy-widget-grid grid grid-flow-row-dense items-stretch grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6 xl:gap-5 3xl:grid-cols-12 3xl:gap-6 auto-rows-min lg:auto-rows-[minmax(10.5rem,auto)] xl:auto-rows-[minmax(11rem,auto)]">
+      {visibleWidgets.map((w) =>
+        dndReady ? (
+          <SortableTile
+            key={w.widget_key}
+            id={w.widget_key}
+            visible={w.visible}
+            onToggle={() => onToggle(w.widget_key)}
+          >
+            {childrenMap[w.widget_key]}
+          </SortableTile>
+        ) : (
+          <StaticTile
+            key={w.widget_key}
+            id={w.widget_key}
+            visible={w.visible}
+            onToggle={() => onToggle(w.widget_key)}
+          >
+            {childrenMap[w.widget_key]}
+          </StaticTile>
+        ),
+      )}
+    </div>
+  );
+  if (!dndReady) return grid;
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <SortableContext items={orderedKeys} strategy={rectSortingStrategy}>
+        {grid}
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
+  const dndReady = useDndReady();
   const demo = isDemoModeClient();
   const [widgets, setWidgets] = React.useState(() =>
     demo ? clientGetWidgets() : initialWidgets,
@@ -211,22 +302,15 @@ export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
           description="Todos los widgets están ocultos. Restáuralos abajo con el icono de ojo."
         />
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={orderedKeys} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {visibleWidgets.map((w) => (
-                <SortableTile
-                  key={w.widget_key}
-                  id={w.widget_key}
-                  visible={w.visible}
-                  onToggle={() => toggle(w.widget_key)}
-                >
-                  {childrenMap[w.widget_key]}
-                </SortableTile>
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <WidgetGridBody
+          dndReady={dndReady}
+          visibleWidgets={visibleWidgets}
+          orderedKeys={orderedKeys}
+          childrenMap={childrenMap}
+          sensors={sensors}
+          onDragEnd={onDragEnd}
+          onToggle={toggle}
+        />
       )}
 
       {hiddenWidgets.length > 0 && (

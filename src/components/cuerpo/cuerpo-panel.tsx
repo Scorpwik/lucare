@@ -179,8 +179,8 @@ export function CuerpoPanel({
 
   return (
     <div className="space-y-4">
-      <PanelGrid className="lg:grid-cols-3">
-        <GlassCard className="p-4 space-y-3 lg:col-span-1">
+      <PanelGrid className="lg:grid-cols-3 xl:grid-cols-12">
+        <GlassCard className="p-4 space-y-3 lg:col-span-1 xl:col-span-4">
           <p className="silk">último registro</p>
           <p className="font-dot font-black text-4xl tabular-nums">
             {latest?.weight_kg ?? "—"}{" "}
@@ -218,7 +218,7 @@ export function CuerpoPanel({
           </p>
         </GlassCard>
 
-        <GlassCard className="p-4 lg:col-span-2">
+        <GlassCard className="p-4 lg:col-span-2 xl:col-span-8">
           <p className="silk mb-3">{form.id ? "editar registro" : "registrar medidas"}</p>
           <form className="space-y-3" onSubmit={saveMetric}>
             <div>

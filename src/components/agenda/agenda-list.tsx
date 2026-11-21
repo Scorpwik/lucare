@@ -6,9 +6,21 @@ import { EmptyState } from "@/components/lucare/empty-state";
 type Props = {
   entries: AgendaEntry[];
   compact?: boolean;
+  wide?: boolean;
 };
 
-export function AgendaList({ entries, compact }: Props) {
+function formatDuration(starts: string, ends: string | null): string | null {
+  if (!ends) return null;
+  const mins = Math.round(
+    (new Date(ends).getTime() - new Date(starts).getTime()) / 60_000,
+  );
+  if (mins < 1) return null;
+  return mins >= 60
+    ? `${Math.floor(mins / 60)} h ${mins % 60 ? `${mins % 60} min` : ""}`.trim()
+    : `${mins} min`;
+}
+
+export function AgendaList({ entries, compact, wide }: Props) {
   if (entries.length === 0) {
     return (
       <EmptyState
@@ -20,37 +32,56 @@ export function AgendaList({ entries, compact }: Props) {
 
   return (
     <ul>
-      {entries.map((ev) => (
-        <li
-          key={`${ev.kind}-${ev.id}`}
-          className={`flex gap-3 items-baseline py-2 border-b border-border text-sm ${
-            compact ? "gap-2" : ""
-          }`}
-        >
-          <time
-            className={`font-mono text-xs text-muted-foreground tabular-nums shrink-0 ${
-              compact ? "w-14" : "w-20"
+      {entries.map((ev) => {
+        const duration = formatDuration(ev.starts_at, ev.ends_at);
+        const endLabel =
+          ev.ends_at && (wide || !compact)
+            ? formatTimeEc(ev.ends_at, { hour: "2-digit", minute: "2-digit" })
+            : null;
+        return (
+          <li
+            key={`${ev.kind}-${ev.id}`}
+            className={`flex gap-3 items-start py-2.5 border-b border-border text-sm lc-card-interactive rounded-[var(--r-sm)] px-1 -mx-1 hover:bg-surface/40 ${
+              compact ? "gap-2" : ""
             }`}
           >
-            {formatTimeEc(ev.starts_at, {
-              ...(compact
-                ? { hour: "2-digit", minute: "2-digit" }
-                : { weekday: "short", hour: "2-digit", minute: "2-digit" }),
-            })}
-          </time>
-          <span className="flex-1">{ev.title}</span>
-          <DomainChip
-            label={ev.source_label}
-            domain={
-              ev.kind === "notion_task"
-                ? "sleep"
-                : ev.kind === "appointment"
-                  ? "pill"
-                  : undefined
-            }
-          />
-        </li>
-      ))}
+            <time
+              className={`font-mono text-xs text-muted-foreground tabular-nums shrink-0 ${
+                compact ? "w-14" : wide ? "w-28" : "w-20"
+              }`}
+            >
+              {formatTimeEc(ev.starts_at, {
+                ...(compact
+                  ? { hour: "2-digit", minute: "2-digit" }
+                  : {
+                      weekday: wide ? "short" : undefined,
+                      day: wide ? "numeric" : undefined,
+                      month: wide ? "short" : undefined,
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }),
+              })}
+              {wide && endLabel ? ` – ${endLabel}` : null}
+            </time>
+            <div className="flex-1 min-w-0">
+              <span className="lc-card-title font-medium block leading-snug">{ev.title}</span>
+              {wide && duration ? (
+                <span className="text-xs font-mono text-muted-foreground">{duration}</span>
+              ) : null}
+            </div>
+            <DomainChip
+              label={ev.source_label}
+              domain={
+                ev.kind === "notion_task"
+                  ? "sleep"
+                  : ev.kind === "appointment"
+                    ? "pill"
+                    : undefined
+              }
+            />
+          </li>
+        );
+      })}
     </ul>
   );
 }

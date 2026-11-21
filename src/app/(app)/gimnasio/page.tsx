@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { AsyncPageFallback } from "@/components/layout/async-page-fallback";
+import { PageHeading } from "@/components/layout/page-heading";
 import { GimnasioPageContent } from "@/components/gimnasio/gimnasio-page-content";
 
 export const metadata = { title: "Gimnasio" };
@@ -7,10 +8,7 @@ export const metadata = { title: "Gimnasio" };
 export default function GimnasioPage() {
   return (
     <div>
-      <header className="mb-4">
-        <p className="silk">módulo · gimnasio</p>
-        <h1 className="font-dot font-black text-4xl">Gimnasio</h1>
-      </header>
+      <PageHeading module="módulo · gimnasio" title="Gimnasio" />
       <Suspense fallback={<AsyncPageFallback />}>
         <GimnasioPageContent />
       </Suspense>

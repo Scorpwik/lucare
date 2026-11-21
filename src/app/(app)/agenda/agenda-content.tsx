@@ -10,18 +10,28 @@ export async function AgendaContent() {
     fetchIntegrationStatuses(),
   ]);
 
-  return (
-    <>
-      <IntegrationBadges statuses={statuses} />
+  const upcomingTasks = entries.filter((e) => e.kind === "notion_task").slice(0, 8);
 
-      <GlassCard className="p-4 mt-4">
+  return (
+  <>
+    <IntegrationBadges statuses={statuses} />
+
+    <div className="mt-4 xl:grid xl:grid-cols-12 xl:gap-5 items-start">
+      <GlassCard className="p-4 sm:p-5 xl:col-span-8">
         <p className="silk mb-3">próximos · eventos y deberes</p>
-        <AgendaList entries={entries} />
+        <AgendaList entries={entries} wide />
       </GlassCard>
 
-      <div className="mt-4">
+      <div className="mt-4 xl:mt-0 space-y-4 xl:col-span-4">
+        {upcomingTasks.length > 0 ? (
+          <GlassCard className="p-4">
+            <p className="silk mb-2">deberes próximos</p>
+            <AgendaList entries={upcomingTasks} compact />
+          </GlassCard>
+        ) : null}
         <IntegrationPanel initial={statuses} />
       </div>
-    </>
+    </div>
+  </>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import {
+  fetchAllRecentSets,
   fetchWorkoutExercises,
   fetchWorkoutSessions,
   fetchWorkoutTemplates,
@@ -28,12 +29,35 @@ function weekdayInGuayaquil(): number {
   return map[wd] ?? new Date().getDay();
 }
 
+function weeklyVolumeBars(
+  sessions: { started_at: string }[],
+  sets: { completed_at: string }[],
+): number[] {
+  const out = [0, 0, 0, 0, 0, 0, 0];
+  const now = Date.now();
+  for (let i = 0; i < 7; i++) {
+    const dayStart = new Date(now - i * 86_400_000);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = dayStart.getTime() + 86_400_000;
+    const count = sets.filter((s) => {
+      const t = new Date(s.completed_at).getTime();
+      return t >= dayStart.getTime() && t < dayEnd;
+    }).length;
+    out[6 - i] = count || sessions.filter((s) => {
+      const t = new Date(s.started_at).getTime();
+      return t >= dayStart.getTime() && t < dayEnd;
+    }).length;
+  }
+  return out;
+}
+
 export async function GimnasioWidget() {
   await connection();
-  const [templates, sessions, exercises] = await Promise.all([
+  const [templates, sessions, exercises, sets] = await Promise.all([
     fetchWorkoutTemplates(),
-    fetchWorkoutSessions(5),
+    fetchWorkoutSessions(14),
     fetchWorkoutExercises(),
+    fetchAllRecentSets(),
   ]);
   const weekday = weekdayInGuayaquil();
   const todayTpl = templates.find((t) => t.weekday === weekday);
@@ -59,11 +83,31 @@ export async function GimnasioWidget() {
     sub = `Próxima: ${templates[0].name}`;
   }
 
+  const bars = weeklyVolumeBars(sessions, sets);
+  const maxBar = Math.max(...bars, 1);
+
   return (
-    <GlassCard className="p-4">
+    <GlassCard className="p-4 sm:p-5 h-full" domain="gym">
       <p className="silk mb-1">gimnasio</p>
-      <p className="font-dot font-black text-3xl text-gym leading-tight">{headline}</p>
+      <p
+        className={`font-dot font-black text-gym ${
+          active ? "lc-display-cqi" : "lc-display-cqi-multiline"
+        }`}
+      >
+        {headline}
+      </p>
       <p className="text-xs font-mono text-muted-foreground mt-1">{sub}</p>
+      {bars.some((b) => b > 0) ? (
+        <div className="flex items-end gap-0.5 h-8 mt-3 hidden @md:flex" aria-hidden>
+          {bars.map((b, i) => (
+            <div
+              key={i}
+              className="flex-1 rounded-sm bg-[color-mix(in_srgb,var(--gym)_75%,transparent)]"
+              style={{ height: `${Math.max(15, (b / maxBar) * 100)}%` }}
+            />
+          ))}
+        </div>
+      ) : null}
       <Link
         href="/gimnasio"
         className="text-xs font-mono text-muted-foreground mt-2 inline-block"

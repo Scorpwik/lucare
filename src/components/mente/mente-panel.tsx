@@ -176,8 +176,8 @@ export function MentePanel({ initialMoods, initialJournal }: Props) {
   React.useEffect(() => () => stopBreathing(), [stopBreathing]);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <GlassCard className="p-4 space-y-4">
+    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-12">
+      <GlassCard className="p-4 space-y-4 xl:col-span-8">
         <p className="silk">check-in de ánimo</p>
         <p className="font-dot font-black text-4xl">
           {todayMood ? MOOD_LABELS[todayMood.mood - 1] : "Sin registro hoy"}
@@ -223,7 +223,7 @@ export function MentePanel({ initialMoods, initialJournal }: Props) {
         </LcButton>
       </GlassCard>
 
-      <div className="space-y-4">
+      <div className="space-y-4 xl:col-span-4">
         <GlassCard className="p-4 space-y-3">
           <p className="silk">respiración 4-4-4</p>
           <div className="flex items-center justify-center gap-3 text-xs font-mono text-muted-foreground">
