@@ -26,6 +26,8 @@ const envSchema = z.object({
   INTEGRATION_TOKEN_ENCRYPTION_KEY: z.string().optional(),
   AI_GATEWAY_API_KEY: z.string().optional(),
   AI_GATEWAY_MODEL: z.string().optional(),
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().optional(),
 });
 
 function parseEnv() {
@@ -50,18 +52,43 @@ function parseEnv() {
     INTEGRATION_TOKEN_ENCRYPTION_KEY: process.env.INTEGRATION_TOKEN_ENCRYPTION_KEY,
     AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
     AI_GATEWAY_MODEL: process.env.AI_GATEWAY_MODEL,
+    GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    GEMINI_MODEL: process.env.GEMINI_MODEL,
   });
 }
+
+/** Flash económico — id verificado en `@ai-sdk/google` modelDefinitions (tipo language). */
+export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 
 /** Modelo por defecto del AI Gateway — económico y verificado en el catálogo. */
 export const DEFAULT_AI_GATEWAY_MODEL = "amazon/nova-micro";
 
-export function aiGatewayConfigured(): boolean {
-  const key = env.AI_GATEWAY_API_KEY ?? process.env.AI_GATEWAY_API_KEY;
+function looksLikeConfiguredSecret(key: string | undefined): boolean {
   return Boolean(key && key.length > 8 && !key.startsWith("tu-"));
 }
 
-export function resolveAiModel(): string {
+export function googleGenerativeAiConfigured(): boolean {
+  const key =
+    env.GOOGLE_GENERATIVE_AI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  return looksLikeConfiguredSecret(key);
+}
+
+export function aiGatewayConfigured(): boolean {
+  const key = env.AI_GATEWAY_API_KEY ?? process.env.AI_GATEWAY_API_KEY;
+  return looksLikeConfiguredSecret(key);
+}
+
+/** Gemini (clave propia) o AI Gateway listos para llamadas en vivo. */
+export function aiConfigured(): boolean {
+  return googleGenerativeAiConfigured() || aiGatewayConfigured();
+}
+
+export function resolveGeminiModelId(): string {
+  const configured = env.GEMINI_MODEL ?? process.env.GEMINI_MODEL;
+  return configured?.trim() || DEFAULT_GEMINI_MODEL;
+}
+
+export function resolveAiGatewayModelId(): string {
   const configured = env.AI_GATEWAY_MODEL ?? process.env.AI_GATEWAY_MODEL;
   return configured?.trim() || DEFAULT_AI_GATEWAY_MODEL;
 }

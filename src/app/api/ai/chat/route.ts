@@ -4,7 +4,8 @@ import { CHAT_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 import { checkRateLimit } from "@/lib/ai/rate-limit";
 import { buildWellnessSnapshot } from "@/lib/ai/snapshot";
 import { getServerDemoState } from "@/lib/demo-store";
-import { aiGatewayConfigured, isDemoMode, resolveAiModel } from "@/lib/env";
+import { resolveAiModel } from "@/lib/ai/resolve-model";
+import { aiConfigured, isDemoMode } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 async function chatRateKey(): Promise<string> {
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
     const question = extractQuestion(body.messages ?? []);
     const snapshot = await buildWellnessSnapshot();
 
-    if (!aiGatewayConfigured()) {
+    if (!aiConfigured()) {
       return Response.json({
         role: "assistant",
         content: demoChatReply(question, snapshot),
@@ -65,19 +66,27 @@ export async function POST(req: Request) {
       })
       .join("\n");
 
-    const { text } = await generateText({
-      model: resolveAiModel(),
-      system: `${CHAT_SYSTEM_PROMPT}\n\nContexto wellness (JSON):\n${JSON.stringify(snapshot)}`,
-      prompt: conversation || question,
-      maxOutputTokens: 600,
-      temperature: 0.5,
-    });
+    try {
+      const { text } = await generateText({
+        model: resolveAiModel(),
+        system: `${CHAT_SYSTEM_PROMPT}\n\nContexto wellness (JSON):\n${JSON.stringify(snapshot)}`,
+        prompt: conversation || question,
+        maxOutputTokens: 600,
+        temperature: 0.5,
+      });
 
-    return Response.json({
-      role: "assistant",
-      content: text.trim(),
-      isDemo: false,
-    });
+      return Response.json({
+        role: "assistant",
+        content: text.trim(),
+        isDemo: false,
+      });
+    } catch {
+      return Response.json({
+        role: "assistant",
+        content: demoChatReply(question, snapshot),
+        isDemo: true,
+      });
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error";
     return Response.json({ error: message }, { status: 500 });

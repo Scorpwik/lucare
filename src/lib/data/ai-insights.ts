@@ -7,11 +7,8 @@ import {
   type WellnessSnapshot,
 } from "@/lib/ai/snapshot";
 import { getServerDemoState, setServerDemoState } from "@/lib/demo-store";
-import {
-  aiGatewayConfigured,
-  isDemoMode,
-  resolveAiModel,
-} from "@/lib/env";
+import { resolveAiModel } from "@/lib/ai/resolve-model";
+import { aiConfigured, isDemoMode } from "@/lib/env";
 import type { AiDailyInsight } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { dateInGuayaquil } from "@/lib/reminders";
@@ -139,7 +136,7 @@ export async function getDailyInsight(options?: {
   }
 
   const snapshot = await buildWellnessSnapshot();
-  const canUseAi = aiGatewayConfigured();
+  const canUseAi = aiConfigured();
 
   let content: string;
   let isDemo: boolean;

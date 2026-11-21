@@ -37,7 +37,9 @@ export function demoDailyInsight(snapshot: WellnessSnapshot): string {
     parts.push("Buen trabajo con el entrenamiento reciente; prioriza hidratación y estiramiento suave.");
   }
 
-  parts.push("Modo demo: conecta el AI Gateway en ajustes de servidor para insights personalizados en vivo.");
+  parts.push(
+    "Modo demo: configura Gemini (GOOGLE_GENERATIVE_AI_API_KEY) o una clave de IA en el servidor para insights personalizados en vivo.",
+  );
 
   return parts.join(" ");
 }
