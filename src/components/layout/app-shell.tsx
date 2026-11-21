@@ -5,8 +5,10 @@ import { MobileTabBar } from "./mobile-tab-bar";
 import { MobileFab } from "./mobile-fab";
 import { ThemeToggle } from "./theme-toggle";
 import { LucasCompanion } from "@/components/lucas/lucas-companion";
+import { useHealthConnectAutoSync } from "@/hooks/use-health-connect-auto-sync";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  useHealthConnectAutoSync();
   return (
     <div className="min-h-dvh flex flex-col lg:flex-row">
       <DesktopSidebar />

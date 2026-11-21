@@ -1,3 +1,4 @@
+import { HealthConnectSyncPanel } from "@/components/ajustes/health-connect-sync-panel";
 import { HealthImportPanel } from "@/components/ajustes/health-import-panel";
 import { LucasSettingsPanel } from "@/components/ajustes/lucas-settings-panel";
 import { PasswordSettingsPanel } from "@/components/ajustes/password-settings-panel";
@@ -68,6 +69,7 @@ export async function AjustesContent({
           <IntegrationPanel initial={statuses} />
         </div>
         <div className="lg:col-span-2">
+          <HealthConnectSyncPanel />
           <HealthImportPanel />
         </div>
 
