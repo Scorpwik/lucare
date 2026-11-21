@@ -1,6 +1,35 @@
 import { NextResponse } from "next/server";
-import { upsertExercise } from "@/lib/data/gym";
+import {
+  deleteExercise,
+  fetchWorkoutExercises,
+  upsertExercise,
+} from "@/lib/data/gym";
 import type { ExerciseInput } from "@/lib/data/gym";
+
+export async function GET(request: Request) {
+  const templateId = new URL(request.url).searchParams.get("template_id");
+  try {
+    const rows = await fetchWorkoutExercises(templateId ?? undefined);
+    return NextResponse.json(rows);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "Falta id" }, { status: 400 });
+  }
+  try {
+    await deleteExercise(id);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   const body = (await request.json()) as ExerciseInput & { id?: string | null };

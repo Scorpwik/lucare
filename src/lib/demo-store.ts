@@ -299,14 +299,26 @@ function seedGym(): {
 } {
   const t = nowIso();
   const templateId = uid();
+  const templateLegsId = uid();
+  const today = new Date().getDay();
   const templates: WorkoutTemplate[] = [
     {
       id: templateId,
       user_id: DEMO_USER_ID,
       name: "Pecho y tríceps",
-      weekday: new Date().getDay(),
+      weekday: today,
       notes: "Máquinas sala principal",
       sort_order: 0,
+      created_at: t,
+      updated_at: t,
+    },
+    {
+      id: templateLegsId,
+      user_id: DEMO_USER_ID,
+      name: "Piernas",
+      weekday: (today + 2) % 7,
+      notes: "Prensa y extensiones",
+      sort_order: 1,
       created_at: t,
       updated_at: t,
     },
@@ -336,10 +348,27 @@ function seedGym(): {
       created_at: t,
       updated_at: t,
     },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      template_id: templateLegsId,
+      name: "Prensa inclinada",
+      machine: "Life Fitness",
+      default_rest_seconds: 120,
+      sort_order: 0,
+      created_at: t,
+      updated_at: t,
+    },
   ];
   const sessionId = uid();
   const started = new Date();
   started.setHours(started.getHours() - 1);
+  const pastSessionId = uid();
+  const pastStart = new Date();
+  pastStart.setDate(pastStart.getDate() - 3);
+  pastStart.setHours(18, 0, 0, 0);
+  const pastEnd = new Date(pastStart);
+  pastEnd.setHours(19, 15, 0, 0);
   const sessions: WorkoutSession[] = [
     {
       id: sessionId,
@@ -350,6 +379,16 @@ function seedGym(): {
       notes: null,
       created_at: t,
       updated_at: t,
+    },
+    {
+      id: pastSessionId,
+      user_id: DEMO_USER_ID,
+      template_id: templateId,
+      started_at: pastStart.toISOString(),
+      ended_at: pastEnd.toISOString(),
+      notes: "Buena energía",
+      created_at: pastStart.toISOString(),
+      updated_at: pastEnd.toISOString(),
     },
   ];
   const sets: WorkoutSet[] = [
@@ -376,6 +415,30 @@ function seedGym(): {
       rest_seconds: 90,
       completed_at: t,
       created_at: t,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      session_id: pastSessionId,
+      exercise_id: ex1,
+      set_number: 1,
+      reps: 12,
+      weight_kg: 38,
+      rest_seconds: 90,
+      completed_at: pastStart.toISOString(),
+      created_at: pastStart.toISOString(),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      session_id: pastSessionId,
+      exercise_id: ex2,
+      set_number: 1,
+      reps: 10,
+      weight_kg: null,
+      rest_seconds: 75,
+      completed_at: pastStart.toISOString(),
+      created_at: pastStart.toISOString(),
     },
   ];
   return { templates, exercises, sessions, sets };

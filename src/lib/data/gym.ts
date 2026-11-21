@@ -347,3 +347,56 @@ export async function endSession(sessionId: string): Promise<void> {
     .eq("user_id", user.id)
     .eq("id", sessionId);
 }
+
+export async function deleteTemplate(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const state = getServerDemoState();
+    state.workoutTemplates = state.workoutTemplates.filter((t) => t.id !== id);
+    state.workoutExercises = state.workoutExercises.filter(
+      (e) => e.template_id !== id,
+    );
+    return;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+  const { error } = await supabase
+    .from("workout_templates")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteExercise(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const state = getServerDemoState();
+    const inUse = state.workoutSets.some((s) => s.exercise_id === id);
+    if (inUse) {
+      throw new Error("Hay series registradas con este ejercicio");
+    }
+    state.workoutExercises = state.workoutExercises.filter((e) => e.id !== id);
+    return;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+  const { error } = await supabase
+    .from("workout_exercises")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("id", id);
+  if (error) {
+    throw new Error(
+      error.code === "23503"
+        ? "Hay series registradas con este ejercicio"
+        : error.message,
+    );
+  }
+}
