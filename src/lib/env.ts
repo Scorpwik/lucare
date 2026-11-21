@@ -58,13 +58,15 @@ function parseEnv() {
 }
 
 /**
- * Flash por defecto. gemini-2.5-flash devuelve 404 para cuentas nuevas de AI Studio
- * ("no longer available to new users"), así que usamos la versión vigente.
+ * Modelo por defecto. En producción (cuenta AI Studio nueva):
+ * - gemini-2.5-flash → 404 "no longer available to new users".
+ * - gemini-3.8-flash y gemini-flash-latest → sin respuesta en >20 s.
+ * - gemini-flash-lite-latest → responde en <1 s.
  */
-export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
+export const DEFAULT_GEMINI_MODEL = "gemini-flash-lite-latest";
 
-/** Alias de Google al Flash-Lite vigente (más rápido); respaldo si el modelo principal falla. */
-export const GEMINI_FALLBACK_MODEL = "gemini-flash-lite-latest";
+/** Respaldo si el modelo principal falla. */
+export const GEMINI_FALLBACK_MODEL = "gemini-3.8-flash";
 
 /** Modelo por defecto del AI Gateway — económico y verificado en el catálogo. */
 export const DEFAULT_AI_GATEWAY_MODEL = "amazon/nova-micro";
