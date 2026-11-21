@@ -1,6 +1,20 @@
 import { NextResponse } from "next/server";
-import { reorderWidgets, updateWidgetVisibility } from "@/lib/data/dashboard";
+import {
+  fetchDashboardWidgets,
+  reorderWidgets,
+  updateWidgetVisibility,
+} from "@/lib/data/dashboard";
 import type { WidgetKey } from "@/lib/types";
+
+export async function GET() {
+  try {
+    const widgets = await fetchDashboardWidgets();
+    return NextResponse.json({ widgets });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
 
 type PatchBody = {
   reorder?: WidgetKey[];

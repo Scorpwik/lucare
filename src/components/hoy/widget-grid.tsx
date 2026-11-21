@@ -20,11 +20,15 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { DashboardWidget, WidgetKey } from "@/lib/types";
 import {
+  clientFetchWidgets,
   clientGetWidgets,
   clientReorderWidgets,
   clientToggleWidget,
 } from "@/lib/data/dashboard-client";
 import { isDemoModeClient } from "@/lib/env";
+import { EmptyState } from "@/components/lucare/empty-state";
+import { ErrorState } from "@/components/lucare/error-state";
+import { LoadingState } from "@/components/lucare/loading-state";
 import { LcButton } from "@/components/lucare/lc-button";
 import { Eye, EyeOff, GripVertical } from "lucide-react";
 
@@ -86,14 +90,48 @@ function SortableTile({
 }
 
 export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
+  const demo = isDemoModeClient();
   const [widgets, setWidgets] = React.useState(() =>
-    isDemoModeClient() ? clientGetWidgets() : initialWidgets,
+    demo ? clientGetWidgets() : initialWidgets,
+  );
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
+
+  const reload = React.useCallback(async () => {
+    if (demo) {
+      setWidgets(clientGetWidgets());
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const next = await clientFetchWidgets();
+      setWidgets(next);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al cargar widgets");
+    } finally {
+      setLoading(false);
+    }
+  }, [demo]);
+
+  const visibleWidgets = React.useMemo(
+    () =>
+      [...widgets]
+        .filter((w) => w.visible)
+        .sort((a, b) => a.sort_order - b.sort_order),
+    [widgets],
   );
 
-  const orderedKeys = widgets
-    .filter((w) => w.visible)
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((w) => w.widget_key);
+  const hiddenWidgets = React.useMemo(
+    () =>
+      [...widgets]
+        .filter((w) => !w.visible)
+        .sort((a, b) => a.sort_order - b.sort_order),
+    [widgets],
+  );
+
+  const orderedKeys = visibleWidgets.map((w) => w.widget_key);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -105,7 +143,7 @@ export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
       [...prev]
         .map((w) => ({
           ...w,
-          sort_order: next.indexOf(w.widget_key),
+          sort_order: next.indexOf(w.widget_key) >= 0 ? next.indexOf(w.widget_key) : w.sort_order,
         }))
         .sort((a, b) => a.sort_order - b.sort_order),
     );
@@ -117,47 +155,103 @@ export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
     const oldIndex = orderedKeys.indexOf(active.id as WidgetKey);
     const newIndex = orderedKeys.indexOf(over.id as WidgetKey);
     const next = arrayMove(orderedKeys, oldIndex, newIndex);
-    clientReorderWidgets(next);
-    if (isDemoModeClient()) setWidgets(clientGetWidgets());
-    else applyOrder(next);
+    setSaving(true);
+    void clientReorderWidgets(next)
+      .then(() => {
+        if (demo) setWidgets(clientGetWidgets());
+        else applyOrder(next);
+      })
+      .finally(() => setSaving(false));
   };
 
   const toggle = (key: WidgetKey) => {
     const w = widgets.find((x) => x.widget_key === key);
     const nextVisible = !(w?.visible ?? true);
-    clientToggleWidget(key, nextVisible);
-    if (isDemoModeClient()) {
-      setWidgets(clientGetWidgets());
-    } else {
-      setWidgets((prev) =>
-        prev.map((x) =>
-          x.widget_key === key
-            ? { ...x, visible: nextVisible, updated_at: new Date().toISOString() }
-            : x,
-        ),
-      );
-    }
+    setSaving(true);
+    void clientToggleWidget(key, nextVisible)
+      .then(() => {
+        if (demo) {
+          setWidgets(clientGetWidgets());
+        } else {
+          setWidgets((prev) =>
+            prev.map((x) =>
+              x.widget_key === key
+                ? { ...x, visible: nextVisible, updated_at: new Date().toISOString() }
+                : x,
+            ),
+          );
+        }
+      })
+      .finally(() => setSaving(false));
   };
 
+  if (loading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} retry={() => void reload()} />;
+  }
+
+  if (widgets.length === 0) {
+    return (
+      <EmptyState
+        title="Sin widgets"
+        description="No hay widgets en tu panel. Inicia sesión de nuevo o contacta soporte."
+      />
+    );
+  }
+
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <SortableContext items={orderedKeys} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {widgets
-            .filter((w) => w.visible)
-            .sort((a, b) => a.sort_order - b.sort_order)
-            .map((w) => (
-              <SortableTile
+    <div className="space-y-4" aria-busy={saving}>
+      {visibleWidgets.length === 0 ? (
+        <EmptyState
+          title="Panel vacío"
+          description="Todos los widgets están ocultos. Restáuralos abajo con el icono de ojo."
+        />
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <SortableContext items={orderedKeys} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {visibleWidgets.map((w) => (
+                <SortableTile
+                  key={w.widget_key}
+                  id={w.widget_key}
+                  visible={w.visible}
+                  onToggle={() => toggle(w.widget_key)}
+                >
+                  {childrenMap[w.widget_key]}
+                </SortableTile>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
+
+      {hiddenWidgets.length > 0 && (
+        <div className="border border-dashed border-border rounded-[var(--r)] p-3">
+          <p className="silk text-xs mb-2">widgets ocultos</p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {hiddenWidgets.map((w) => (
+              <li
                 key={w.widget_key}
-                id={w.widget_key}
-                visible={w.visible}
-                onToggle={() => toggle(w.widget_key)}
+                className="flex items-center justify-between gap-2 text-sm border border-border rounded-[var(--pill)] px-3 py-2 bg-surface"
               >
-                {childrenMap[w.widget_key]}
-              </SortableTile>
+                <span className="font-mono text-xs text-muted-foreground">{w.widget_key}</span>
+                <LcButton
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Mostrar widget"
+                  onClick={() => toggle(w.widget_key)}
+                >
+                  <Eye className="size-3.5" />
+                </LcButton>
+              </li>
             ))}
+          </ul>
         </div>
-      </SortableContext>
-    </DndContext>
+      )}
+    </div>
   );
 }

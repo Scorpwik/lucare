@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { getServerDemoState } from "@/lib/demo-store";
 import { isDemoMode } from "@/lib/env";
+import { fetchAppointments } from "@/lib/data/medications";
 import { createClient } from "@/lib/supabase/server";
 import type { AgendaEntry } from "@/lib/types";
 
@@ -20,8 +21,27 @@ export async function fetchAgendaEntries(options?: {
   const from = options?.from ?? new Date();
   const to = options?.to ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+  const appointmentEntries = async (): Promise<AgendaEntry[]> => {
+    const appts = await fetchAppointments();
+    return appts
+      .filter((a) => {
+        const t = new Date(a.starts_at).getTime();
+        return t >= from.getTime() && t <= to.getTime();
+      })
+      .map(
+        (a): AgendaEntry => ({
+          id: a.id,
+          title: a.title,
+          starts_at: a.starts_at,
+          ends_at: a.ends_at,
+          source_label: "Cita",
+          kind: "appointment",
+        }),
+      );
+  };
+
   if (isDemoMode()) {
-    const all = getServerDemoState().externalEvents
+    const external = getServerDemoState().externalEvents
       .filter((ev) => {
         const t = new Date(ev.starts_at).getTime();
         return t >= from.getTime() && t <= to.getTime();
@@ -36,7 +56,7 @@ export async function fetchAgendaEntries(options?: {
           kind: ev.provider === "notion_deberes" ? "notion_task" : "event",
         }),
       );
-    const sorted = mergeAndSort(all);
+    const sorted = mergeAndSort([...external, ...(await appointmentEntries())]);
     return limit ? sorted.slice(0, limit) : sorted;
   }
 
@@ -82,6 +102,10 @@ export async function fetchAgendaEntries(options?: {
     kind: "notion_task",
   }));
 
-  const merged = mergeAndSort([...events, ...tasks]);
+  const merged = mergeAndSort([
+    ...events,
+    ...tasks,
+    ...(await appointmentEntries()),
+  ]);
   return limit ? merged.slice(0, limit) : merged;
 }

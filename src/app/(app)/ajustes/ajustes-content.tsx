@@ -1,4 +1,6 @@
+import { PushSettingsPanel } from "@/components/ajustes/push-settings-panel";
 import { IntegrationPanel } from "@/components/agenda/integration-panel";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { fetchIntegrationStatuses } from "@/lib/data/integrations";
 import { GlassCard } from "@/components/lucare/glass-card";
 import type { WidgetKey } from "@/lib/types";
@@ -41,6 +43,16 @@ export async function AjustesContent({
       {banner && (
         <GlassCard className="p-3 mb-4 text-sm border border-border">{banner}</GlassCard>
       )}
+
+      <GlassCard className="p-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="silk mb-1">tema</p>
+          <p className="text-xs text-muted-foreground">Claro, oscuro o según el sistema.</p>
+        </div>
+        <ThemeToggle />
+      </GlassCard>
+
+      <PushSettingsPanel />
 
       <IntegrationPanel initial={statuses} />
 

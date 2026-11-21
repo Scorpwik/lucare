@@ -27,5 +27,11 @@ self.addEventListener("push", (event: PushEvent) => {
     | undefined;
   const title = data?.title ?? "LuCare";
   const body = data?.body ?? "Tienes un recordatorio";
-  event.waitUntil(self.registration.showNotification(title, { body }));
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+    }),
+  );
 });

@@ -1,10 +1,13 @@
+import { connection } from "next/server";
 import { fetchAppointments } from "@/lib/data/medications";
 import { formatTimeEc } from "@/lib/greetings";
 import { GlassCard } from "@/components/lucare/glass-card";
 
 export async function CitasWidget() {
+  await connection();
   const appts = await fetchAppointments();
-  const upcoming = appts;
+  const from = new Date();
+  const upcoming = appts.filter((a) => new Date(a.starts_at) >= from);
 
   return (
     <GlassCard className="p-4">

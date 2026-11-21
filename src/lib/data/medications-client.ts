@@ -93,3 +93,29 @@ export async function clientUpsertAppointment(
   });
   return created ?? getDemoState().appointments.at(-1) ?? null;
 }
+
+export async function clientDeleteAppointment(id: string): Promise<boolean> {
+  if (!isDemoModeClient()) {
+    const res = await fetch(`/api/appointments?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) return false;
+    return true;
+  }
+  setDemoState((prev) => ({
+    ...prev,
+    appointments: prev.appointments.filter((a) => a.id !== id),
+  }));
+  return true;
+}
+
+export async function clientFetchAppointments(): Promise<MedicalAppointment[]> {
+  if (isDemoModeClient()) {
+    return getDemoState().appointments.sort(
+      (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+    );
+  }
+  const res = await fetch("/api/appointments");
+  if (!res.ok) return [];
+  return (await res.json()) as MedicalAppointment[];
+}

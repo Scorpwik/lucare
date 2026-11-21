@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { computeNextFireTime } from "@/lib/reminders";
 import { isDemoMode } from "@/lib/env";
+import { sendPushToUser } from "@/lib/push/send";
+import { vapidConfigured } from "@/lib/push/vapid";
 import { createClient } from "@/lib/supabase/server";
 
 type ScheduleBody = {
@@ -11,10 +13,18 @@ type ScheduleBody = {
   start_time?: string;
   end_time?: string;
   interval_minutes?: number;
+  /** Si es true y VAPID está listo, envía push inmediato de prueba además de agendar. */
+  notify_now?: boolean;
 };
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as ScheduleBody;
+  let payload: ScheduleBody;
+  try {
+    payload = (await request.json()) as ScheduleBody;
+  } catch {
+    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+  }
+
   const {
     source_type = "custom",
     source_id = crypto.randomUUID(),
@@ -23,6 +33,7 @@ export async function POST(request: Request) {
     start_time = "08:00",
     end_time = "22:00",
     interval_minutes = 60,
+    notify_now = false,
   } = payload;
 
   const fireAt = computeNextFireTime({
@@ -44,7 +55,12 @@ export async function POST(request: Request) {
   };
 
   if (isDemoMode()) {
-    return NextResponse.json({ ok: true, mode: "demo", scheduled: row });
+    return NextResponse.json({
+      ok: true,
+      mode: "demo",
+      scheduled: row,
+      push: vapidConfigured() ? "available" : "vapid_pending",
+    });
   }
 
   try {
@@ -52,17 +68,28 @@ export async function POST(request: Request) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ scheduled: row, mode: "anonymous" });
+
+    if (user) {
+      const { error } = await supabase.from("scheduled_reminders").insert({
+        ...row,
+        user_id: user.id,
+      });
+      if (error) throw error;
     }
 
-    await supabase.from("scheduled_reminders").insert({
-      ...row,
-      user_id: user.id,
-    });
+    let push: Awaited<ReturnType<typeof sendPushToUser>> | undefined;
+    if (notify_now && user && vapidConfigured()) {
+      push = await sendPushToUser(user.id, { title, body: body ?? undefined });
+    }
 
-    return NextResponse.json({ ok: true, scheduled: row });
-  } catch {
-    return NextResponse.json({ ok: true, mode: "fallback", scheduled: row });
+    return NextResponse.json({
+      ok: true,
+      scheduled: row,
+      push,
+      mode: user ? "authenticated" : "anonymous",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

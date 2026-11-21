@@ -166,3 +166,25 @@ export async function upsertAppointment(
   if (error) throw error;
   return data as MedicalAppointment;
 }
+
+export async function deleteAppointment(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const state = getServerDemoState();
+    state.appointments = state.appointments.filter((a) => a.id !== id);
+    return;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+
+  const { error } = await supabase
+    .from("medical_appointments")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("id", id);
+
+  if (error) throw error;
+}

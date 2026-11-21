@@ -7,7 +7,11 @@ import { LcButton } from "@/components/lucare/lc-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { clientUpsertAppointment, clientUpsertMedication } from "@/lib/data/medications-client";
+import {
+  clientDeleteAppointment,
+  clientUpsertAppointment,
+  clientUpsertMedication,
+} from "@/lib/data/medications-client";
 import { clientUpsertRoutine } from "@/lib/data/skincare-client";
 import { getDemoState } from "@/lib/demo-store";
 import { isDemoModeClient } from "@/lib/env";
@@ -133,6 +137,26 @@ export function CuidadoTabs({
     resetApptForm();
   };
 
+  const deleteAppt = async (id: string) => {
+    const ok = await clientDeleteAppointment(id);
+    if (!ok) {
+      toast.error("No se pudo eliminar la cita");
+      return;
+    }
+    if (isDemoModeClient()) {
+      setAppts(
+        getDemoState().appointments.sort(
+          (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+        ),
+      );
+    } else {
+      setAppts((prev) => prev.filter((a) => a.id !== id));
+      router.refresh();
+    }
+    if (editApptId === id) resetApptForm();
+    toast.success("Cita eliminada");
+  };
+
   const startEditAppt = (a: MedicalAppointment) => {
     setEditApptId(a.id);
     setApptForm({
@@ -251,13 +275,27 @@ export function CuidadoTabs({
           <GlassCard className="p-4">
             <p className="silk mb-3">próximas citas</p>
             <ul className="space-y-3 text-sm">
+              {appts.length === 0 && (
+                <li className="text-muted-foreground text-sm py-2">Sin citas registradas.</li>
+              )}
               {appts.map((a) => (
                 <li key={a.id} className="flex flex-col gap-1 border-b border-border pb-2">
-                  <div className="flex justify-between gap-2">
+                  <div className="flex justify-between gap-2 items-start">
                     <span className="font-medium">{a.title}</span>
-                    <LcButton type="button" variant="ghost" size="sm" onClick={() => startEditAppt(a)}>
-                      Editar
-                    </LcButton>
+                    <div className="flex gap-1 shrink-0">
+                      <LcButton type="button" variant="ghost" size="sm" onClick={() => startEditAppt(a)}>
+                        Editar
+                      </LcButton>
+                      <LcButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-danger"
+                        onClick={() => void deleteAppt(a.id)}
+                      >
+                        Eliminar
+                      </LcButton>
+                    </div>
                   </div>
                   <span className="font-mono text-xs text-muted-foreground">
                     {new Intl.DateTimeFormat("es-EC", {

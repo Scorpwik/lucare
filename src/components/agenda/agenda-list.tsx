@@ -13,7 +13,7 @@ export function AgendaList({ entries, compact }: Props) {
     return (
       <EmptyState
         title="Agenda vacía"
-        description="Conecta Google Calendar o Notion Deberes en Ajustes, o usa modo demo."
+        description="Añade citas en Cuidado o conecta Google Calendar / Notion en Ajustes."
       />
     );
   }
@@ -41,7 +41,13 @@ export function AgendaList({ entries, compact }: Props) {
           <span className="flex-1">{ev.title}</span>
           <DomainChip
             label={ev.source_label}
-            domain={ev.kind === "notion_task" ? "sleep" : undefined}
+            domain={
+              ev.kind === "notion_task"
+                ? "sleep"
+                : ev.kind === "appointment"
+                  ? "pill"
+                  : undefined
+            }
           />
         </li>
       ))}

@@ -137,7 +137,7 @@ export interface AgendaEntry {
   starts_at: string;
   ends_at: string | null;
   source_label: string;
-  kind: "event" | "notion_task";
+  kind: "event" | "notion_task" | "appointment";
 }
 
 export interface CalendarLink {

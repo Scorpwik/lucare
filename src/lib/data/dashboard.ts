@@ -44,11 +44,12 @@ export async function updateWidgetVisibility(
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase
+  const { error } = await supabase
     .from("dashboard_widgets")
     .update({ visible })
     .eq("user_id", user.id)
     .eq("widget_key", widgetKey);
+  if (error) throw error;
 }
 
 export async function reorderWidgets(
@@ -73,7 +74,7 @@ export async function reorderWidgets(
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  await Promise.all(
+  const results = await Promise.all(
     orderedKeys.map((key, sort_order) =>
       supabase
         .from("dashboard_widgets")
@@ -82,4 +83,6 @@ export async function reorderWidgets(
         .eq("widget_key", key),
     ),
   );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw failed.error;
 }
