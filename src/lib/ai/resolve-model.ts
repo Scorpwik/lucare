@@ -1,6 +1,7 @@
 import { google } from "@ai-sdk/google";
 import type { LanguageModel } from "ai";
 import {
+  GEMINI_FALLBACK_MODEL,
   aiGatewayConfigured,
   googleGenerativeAiConfigured,
   resolveAiGatewayModelId,
@@ -17,8 +18,11 @@ export type AiModelCandidate = {
 export function resolveAiModelCandidates(): AiModelCandidate[] {
   const candidates: AiModelCandidate[] = [];
   if (googleGenerativeAiConfigured()) {
-    const modelId = resolveGeminiModelId();
-    candidates.push({ provider: "gemini", modelId, model: google(modelId) });
+    // Google retira modelos para cuentas nuevas (404); el alias "latest" sirve de respaldo.
+    const ids = [...new Set([resolveGeminiModelId(), GEMINI_FALLBACK_MODEL])];
+    for (const modelId of ids) {
+      candidates.push({ provider: "gemini", modelId, model: google(modelId) });
+    }
   }
   if (aiGatewayConfigured()) {
     const modelId = resolveAiGatewayModelId();

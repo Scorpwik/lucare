@@ -57,8 +57,14 @@ function parseEnv() {
   });
 }
 
-/** Flash económico — id verificado en `@ai-sdk/google` modelDefinitions (tipo language). */
-export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+/**
+ * Flash por defecto. gemini-2.5-flash devuelve 404 para cuentas nuevas de AI Studio
+ * ("no longer available to new users"), así que usamos la versión vigente.
+ */
+export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
+
+/** Alias de Google que siempre apunta al Flash vigente; respaldo si el modelo falla. */
+export const GEMINI_FALLBACK_MODEL = "gemini-flash-latest";
 
 /** Modelo por defecto del AI Gateway — económico y verificado en el catálogo. */
 export const DEFAULT_AI_GATEWAY_MODEL = "amazon/nova-micro";
