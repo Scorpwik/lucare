@@ -4,7 +4,7 @@ import { CHAT_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 import { checkRateLimit } from "@/lib/ai/rate-limit";
 import { buildWellnessSnapshot } from "@/lib/ai/snapshot";
 import { getServerDemoState } from "@/lib/demo-store";
-import { resolveAiModel } from "@/lib/ai/resolve-model";
+import { runWithAiFallback } from "@/lib/ai/resolve-model";
 import { aiConfigured, isDemoMode } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -67,20 +67,23 @@ export async function POST(req: Request) {
       .join("\n");
 
     try {
-      const { text } = await generateText({
-        model: resolveAiModel(),
+      const { text } = await runWithAiFallback("chat", (model) =>
+        generateText({
+          model,
         system: `${CHAT_SYSTEM_PROMPT}\n\nContexto wellness (JSON):\n${JSON.stringify(snapshot)}`,
         prompt: conversation || question,
-        maxOutputTokens: 600,
-        temperature: 0.5,
-      });
+          maxOutputTokens: 600,
+          temperature: 0.5,
+        }),
+      );
 
       return Response.json({
         role: "assistant",
         content: text.trim(),
         isDemo: false,
       });
-    } catch {
+    } catch (err) {
+      console.error("[ai:chat] todos los proveedores fallaron; respuesta demo", err instanceof Error ? err.message : err);
       return Response.json({
         role: "assistant",
         content: demoChatReply(question, snapshot),

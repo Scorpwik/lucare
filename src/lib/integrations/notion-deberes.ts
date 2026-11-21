@@ -15,8 +15,16 @@ function extractTitle(page: NotionPage): string {
   return "(Sin título)";
 }
 
+const DUE_PROPERTY_NAMES = ["Fecha de entrega", "fecha", "Fecha", "Due", "Due date"];
+const STATUS_PROPERTY_NAMES = ["Estado", "Status", "estado"];
+
+function orderedProps(page: NotionPage, preferred: string[]): unknown[] {
+  const first = preferred.map((n) => page.properties[n]).filter(Boolean);
+  return [...first, ...Object.values(page.properties)];
+}
+
 function extractDueDate(page: NotionPage): string | null {
-  for (const value of Object.values(page.properties)) {
+  for (const value of orderedProps(page, DUE_PROPERTY_NAMES)) {
     const prop = value as {
       type?: string;
       date?: { start?: string; end?: string | null } | null;
@@ -31,13 +39,18 @@ function extractDueDate(page: NotionPage): string | null {
 }
 
 function extractStatus(page: NotionPage): string | null {
-  for (const value of Object.values(page.properties)) {
-    const prop = value as {
-      type?: string;
-      status?: { name?: string };
-      select?: { name?: string };
-    };
+  const props = orderedProps(page, STATUS_PROPERTY_NAMES) as Array<{
+    type?: string;
+    status?: { name?: string };
+    select?: { name?: string };
+  }>;
+  // Preferir una propiedad de tipo status (p. ej. "Estado") sobre selects como "Materia".
+  for (const prop of props) {
     if (prop?.type === "status" && prop.status?.name) return prop.status.name;
+  }
+  for (const [name, value] of Object.entries(page.properties)) {
+    if (!STATUS_PROPERTY_NAMES.includes(name)) continue;
+    const prop = value as { type?: string; select?: { name?: string } };
     if (prop?.type === "select" && prop.select?.name) return prop.select.name;
   }
   return null;
@@ -46,7 +59,7 @@ function extractStatus(page: NotionPage): string | null {
 function isPendingStatus(status: string | null): boolean {
   if (!status) return true;
   const s = status.toLowerCase();
-  return !["done", "hecho", "completado", "completed", "cerrado"].some((x) =>
+  return !["done", "hecho", "completado", "completed", "cerrado", "entregado"].some((x) =>
     s.includes(x),
   );
 }
@@ -75,15 +88,27 @@ export async function fetchPendingNotionDeberes(): Promise<
       filter: {
         and: [
           {
-            property: "fecha",
+            property: "Fecha de entrega",
             date: { is_not_empty: true },
+          },
+          {
+            property: "Estado",
+            status: { does_not_equal: "Entregado" },
           },
         ],
       },
+      sorts: [{ property: "Fecha de entrega", direction: "ascending" }],
     }),
   });
 
+  if (res.status === 401 || res.status === 403 || res.status === 404) {
+    const err = await res.text();
+    console.error(`[notion] consulta Deberes falló (${res.status}): ${err.slice(0, 300)}`);
+    throw new Error(`Notion API: ${err}`);
+  }
+
   if (!res.ok) {
+    console.warn(`[notion] filtro Deberes rechazado (${res.status}); reintento sin filtro`);
     const fallback = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
       method: "POST",
       headers: {
@@ -95,6 +120,7 @@ export async function fetchPendingNotionDeberes(): Promise<
     });
     if (!fallback.ok) {
       const err = await fallback.text();
+      console.error(`[notion] consulta Deberes falló (${fallback.status}): ${err.slice(0, 300)}`);
       throw new Error(`Notion API: ${err}`);
     }
     const json = (await fallback.json()) as { results?: NotionPage[] };

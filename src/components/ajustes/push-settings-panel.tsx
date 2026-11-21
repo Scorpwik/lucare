@@ -71,10 +71,24 @@ export function PushSettingsPanel() {
 
   const onSubscribe = async () => {
     setBusy(true);
-    const result = await subscribeToWebPush();
-    setBusy(false);
+    let result: Awaited<ReturnType<typeof subscribeToWebPush>>;
+    try {
+      result = await subscribeToWebPush();
+    } catch (e) {
+      result = {
+        ok: false,
+        reason: "error",
+        message: e instanceof Error ? e.message : "No se pudo activar push",
+      };
+    } finally {
+      setBusy(false);
+    }
     if (!result.ok) {
-      if (result.reason === "no-vapid") {
+      if (result.reason === "unsupported") {
+        toast.error("Web Push no disponible", { description: result.message });
+      } else if (result.reason === "denied") {
+        toast.error("Notificaciones bloqueadas", { description: result.message });
+      } else if (result.reason === "no-vapid") {
         toast.message("Web Push no configurado", {
           description: "Define NEXT_PUBLIC_VAPID_PUBLIC_KEY y VAPID_PRIVATE_KEY.",
         });
@@ -84,6 +98,7 @@ export function PushSettingsPanel() {
       return;
     }
     setSubscribed(true);
+    setSubscriptionChecked(true);
     toast.success(demo ? "Suscripción registrada (demo)" : "Notificaciones push activadas");
   };
 

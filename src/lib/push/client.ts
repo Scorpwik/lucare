@@ -17,9 +17,47 @@ export type PushSubscribeResult =
   | { ok: true; mode?: string }
   | { ok: false; reason: "unsupported" | "denied" | "no-vapid" | "error"; message?: string };
 
+/** Espera al service worker sin colgarse si no llega a registrarse. */
+async function serviceWorkerReady(timeoutMs = 8000): Promise<ServiceWorkerRegistration> {
+  const existing = await navigator.serviceWorker.getRegistration();
+  if (!existing) {
+    throw new Error(
+      "El service worker de LuCare no está registrado. Recarga la página o instala la app (PWA) e inténtalo de nuevo.",
+    );
+  }
+  return await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error("El service worker no respondió. Recarga la página e inténtalo de nuevo.")),
+        timeoutMs,
+      ),
+    ),
+  ]);
+}
+
 export async function subscribeToWebPush(): Promise<PushSubscribeResult> {
-  if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
-    return { ok: false, reason: "unsupported", message: "Este navegador no admite Web Push." };
+  if (
+    typeof window === "undefined" ||
+    !("serviceWorker" in navigator) ||
+    !("Notification" in window) ||
+    !("PushManager" in window)
+  ) {
+    return {
+      ok: false,
+      reason: "unsupported",
+      message:
+        "Este navegador no admite Web Push. En iPhone, añade LuCare a la pantalla de inicio y ábrela desde ahí.",
+    };
+  }
+
+  if (Notification.permission === "denied") {
+    return {
+      ok: false,
+      reason: "denied",
+      message:
+        "Las notificaciones están bloqueadas para este sitio. Actívalas en la configuración del navegador y vuelve a intentarlo.",
+    };
   }
 
   const publicKey = vapidPublicKey();
@@ -31,13 +69,29 @@ export async function subscribeToWebPush(): Promise<PushSubscribeResult> {
     };
   }
 
-  const permission = await Notification.requestPermission();
+  let permission: NotificationPermission;
+  try {
+    permission = await Notification.requestPermission();
+  } catch (e) {
+    return {
+      ok: false,
+      reason: "error",
+      message: e instanceof Error ? e.message : "No se pudo pedir permiso de notificaciones.",
+    };
+  }
   if (permission !== "granted") {
-    return { ok: false, reason: "denied", message: "Permiso de notificaciones denegado." };
+    return {
+      ok: false,
+      reason: "denied",
+      message:
+        permission === "denied"
+          ? "Permiso de notificaciones denegado. Actívalo en la configuración del navegador."
+          : "No se concedió el permiso de notificaciones.",
+    };
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await serviceWorkerReady();
     const existing = await registration.pushManager.getSubscription();
     const subscription =
       existing ??

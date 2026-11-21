@@ -7,7 +7,7 @@ import {
   type WellnessSnapshot,
 } from "@/lib/ai/snapshot";
 import { getServerDemoState, setServerDemoState } from "@/lib/demo-store";
-import { resolveAiModel } from "@/lib/ai/resolve-model";
+import { runWithAiFallback } from "@/lib/ai/resolve-model";
 import { aiConfigured, isDemoMode } from "@/lib/env";
 import type { AiDailyInsight } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
@@ -99,13 +99,15 @@ async function storeInsight(
 }
 
 async function generateLiveInsight(snapshot: WellnessSnapshot): Promise<string> {
-  const { text } = await generateText({
-    model: resolveAiModel(),
-    system: INSIGHT_SYSTEM_PROMPT,
-    prompt: `Fecha de hoy: ${snapshot.today}\n\nContexto JSON:\n${snapshotToPromptText(snapshot)}`,
-    maxOutputTokens: 280,
-    temperature: 0.6,
-  });
+  const { text } = await runWithAiFallback("insight", (model) =>
+    generateText({
+      model,
+      system: INSIGHT_SYSTEM_PROMPT,
+      prompt: `Fecha de hoy: ${snapshot.today}\n\nContexto JSON:\n${snapshotToPromptText(snapshot)}`,
+      maxOutputTokens: 280,
+      temperature: 0.6,
+    }),
+  );
   return text.trim();
 }
 
@@ -125,7 +127,8 @@ export async function getDailyInsight(options?: {
 
   if (!options?.force) {
     const cached = await fetchCachedInsight(userId, insightDate);
-    if (cached) {
+    // Un insight demo en caché no debe ocultar la IA en vivo cuando ya hay clave configurada.
+    if (cached && !(cached.is_demo && aiConfigured())) {
       return {
         content: cached.content,
         insightDate,
@@ -145,7 +148,8 @@ export async function getDailyInsight(options?: {
     try {
       content = await generateLiveInsight(snapshot);
       isDemo = false;
-    } catch {
+    } catch (err) {
+      console.error("[ai:insight] todos los proveedores fallaron; insight demo", err instanceof Error ? err.message : err);
       content = demoDailyInsight(snapshot);
       isDemo = true;
     }
