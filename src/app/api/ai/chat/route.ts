@@ -28,7 +28,7 @@ function extractQuestion(messages: UIMessage[]): string {
   );
 }
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -67,9 +67,9 @@ export async function POST(req: Request) {
       .join("\n");
 
     try {
-      const { text } = await runWithAiFallback("chat", (model) =>
+      const { text } = await runWithAiFallback("chat", (ai) =>
         generateText({
-          model,
+          ...ai,
         system: `${CHAT_SYSTEM_PROMPT}\n\nContexto wellness (JSON):\n${JSON.stringify(snapshot)}`,
         prompt: conversation || question,
           maxOutputTokens: 600,

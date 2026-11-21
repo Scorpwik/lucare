@@ -99,9 +99,9 @@ async function storeInsight(
 }
 
 async function generateLiveInsight(snapshot: WellnessSnapshot): Promise<string> {
-  const { text } = await runWithAiFallback("insight", (model) =>
+  const { text } = await runWithAiFallback("insight", (ai) =>
     generateText({
-      model,
+      ...ai,
       system: INSIGHT_SYSTEM_PROMPT,
       prompt: `Fecha de hoy: ${snapshot.today}\n\nContexto JSON:\n${snapshotToPromptText(snapshot)}`,
       maxOutputTokens: 280,

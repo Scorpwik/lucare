@@ -49,19 +49,42 @@ function describeError(err: unknown): string {
  * Ejecuta `run` con cada proveedor configurado hasta que uno responda.
  * Registra el error de cada intento (sin secretos) para diagnosticar en Vercel.
  */
+export type AiCallOptions = {
+  model: LanguageModel;
+  abortSignal: AbortSignal;
+  maxRetries: number;
+  providerOptions?: { google: { thinkingConfig: { thinkingLevel: "minimal" } } };
+};
+
+/** Tiempo máximo por intento, para no agotar el límite de la función en un solo proveedor. */
+const ATTEMPT_TIMEOUT_MS = 15_000;
+
 export async function runWithAiFallback<T>(
   label: string,
-  run: (model: LanguageModel) => Promise<T>,
+  run: (opts: AiCallOptions) => Promise<T>,
 ): Promise<T> {
   const candidates = resolveAiModelCandidates();
   if (candidates.length === 0) throw new Error("IA no configurada");
   let lastError: unknown;
   for (const c of candidates) {
+    const started = Date.now();
     try {
-      return await run(c.model);
+      const result = await run({
+        model: c.model,
+        abortSignal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+        maxRetries: 0,
+        providerOptions:
+          c.provider === "gemini"
+            ? { google: { thinkingConfig: { thinkingLevel: "minimal" } } }
+            : undefined,
+      });
+      console.info(`[ai:${label}] ok ${c.provider}/${c.modelId} en ${Date.now() - started} ms`);
+      return result;
     } catch (err) {
       lastError = err;
-      console.error(`[ai:${label}] ${c.provider}/${c.modelId} falló: ${describeError(err)}`);
+      console.error(
+        `[ai:${label}] ${c.provider}/${c.modelId} falló tras ${Date.now() - started} ms: ${describeError(err)}`,
+      );
     }
   }
   throw lastError;
