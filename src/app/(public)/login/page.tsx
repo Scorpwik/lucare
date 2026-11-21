@@ -1,15 +1,14 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { GlassCard } from "@/components/lucare/glass-card";
 import { LcButton } from "@/components/lucare/lc-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isDemoModeClient } from "@/lib/env";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,12 +21,12 @@ export default function LoginPage() {
   const demoLogin = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/demo", { method: "POST" });
-      if (!res.ok) throw new Error("No se pudo iniciar demo");
+      await fetch("/api/auth/demo", { method: "POST" });
       router.replace("/hoy");
       router.refresh();
     } catch {
-      toast.error("Error al entrar en modo demo");
+      document.cookie = "lucare-demo-session=1; path=/; max-age=2592000; SameSite=Lax";
+      router.replace("/hoy");
     } finally {
       setLoading(false);
     }
@@ -86,12 +85,21 @@ export default function LoginPage() {
     <div className="min-h-dvh flex items-center justify-center p-4">
       <GlassCard className="w-full max-w-md p-6 space-y-6" raised>
         <div>
-          <p className="silk">acceso · LuCare</p>
-          <h1 className="font-dot font-black text-4xl mt-1">Entrar</h1>
+          <p className="silk">acceso</p>
+          <h1 className="font-dot font-black text-4xl leading-none mt-1">LuCare</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Tu panel de salud en Ecuador (America/Guayaquil).
+          </p>
         </div>
 
         {demo && (
-          <LcButton type="button" variant="pri" className="w-full" disabled={loading} onClick={demoLogin}>
+          <LcButton
+            type="button"
+            variant="pri"
+            className="w-full"
+            disabled={loading}
+            onClick={demoLogin}
+          >
             Entrar en modo demo
           </LcButton>
         )}
@@ -167,16 +175,10 @@ export default function LoginPage() {
         )}
 
         {demo && (
-          <p className="text-xs text-muted-foreground text-center">
-            Modo demo activo — datos locales, sin Supabase.
+          <p className="text-xs font-mono text-muted-foreground text-center">
+            LUCARE_DEMO_MODE activo — sin claves de Supabase.
           </p>
         )}
-
-        <p className="text-center text-xs text-muted-foreground">
-          <Link href="/" className="underline-offset-2 hover:underline">
-            Volver al inicio
-          </Link>
-        </p>
       </GlassCard>
     </div>
   );

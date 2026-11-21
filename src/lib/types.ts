@@ -1,4 +1,18 @@
+export type ThemePreference = "light" | "dark" | "system";
+
 export type SkincarePeriod = "am" | "pm" | "custom";
+
+export type LogType =
+  | "skincare_step"
+  | "medication"
+  | "appointment"
+  | "custom";
+
+export type CalendarProvider = "google_calendar" | "notion_deberes";
+
+export type LinkStatus = "disconnected" | "connected" | "error" | "syncing";
+
+export type IntegrationProvider = CalendarProvider;
 
 export type WidgetKey =
   | "saludo"
@@ -15,15 +29,15 @@ export type WidgetKey =
   | "animo"
   | "cuidado_personal";
 
-export type IntegrationProvider = "google_calendar" | "notion_deberes";
-
-export type CalendarLinkStatus = "disconnected" | "connected" | "error" | "syncing";
-
 export interface Profile {
   id: string;
-  display_name?: string | null;
-  timezone?: string;
-  referenceDate?: Date;
+  display_name: string | null;
+  timezone: string;
+  active_hours_start: string;
+  active_hours_end: string;
+  theme: ThemePreference;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DashboardWidget {
@@ -34,6 +48,16 @@ export interface DashboardWidget {
   sort_order: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface PushSubscription {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+  created_at: string;
 }
 
 export interface SkincareRoutine {
@@ -97,6 +121,17 @@ export interface MedicalAppointment {
   updated_at: string;
 }
 
+export interface CareLog {
+  id: string;
+  user_id: string;
+  log_type: LogType;
+  reference_id: string | null;
+  logged_at: string;
+  notes: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface Task {
   id: string;
   user_id: string;
@@ -104,6 +139,18 @@ export interface Task {
   due_at: string | null;
   completed: boolean;
   module_source: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarLink {
+  id: string;
+  user_id: string;
+  provider: CalendarProvider;
+  status: LinkStatus;
+  external_account_id: string | null;
+  metadata: Record<string, unknown>;
+  last_synced_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -117,7 +164,8 @@ export interface ExternalCalendarEvent {
   starts_at: string;
   ends_at: string | null;
   source_label: string;
-  synced_at?: string;
+  raw: Record<string, unknown>;
+  synced_at: string;
 }
 
 export interface ExternalNotionTask {
@@ -127,7 +175,8 @@ export interface ExternalNotionTask {
   title: string;
   due_at: string | null;
   status: string | null;
-  synced_at?: string;
+  raw: Record<string, unknown>;
+  synced_at: string;
 }
 
 /** Entrada unificada para widgets y /agenda */
@@ -140,16 +189,16 @@ export interface AgendaEntry {
   kind: "event" | "notion_task" | "appointment";
 }
 
-export interface CalendarLink {
+export interface ScheduledReminder {
   id: string;
   user_id: string;
-  provider: IntegrationProvider;
-  status: CalendarLinkStatus;
-  external_account_id: string | null;
-  metadata: Record<string, unknown>;
-  last_synced_at: string | null;
+  source_type: string;
+  source_id: string;
+  title: string;
+  body: string | null;
+  fire_at: string;
+  sent_at: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export interface ReminderWindow {

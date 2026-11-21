@@ -1,49 +1,59 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { env, isDemoMode, supabaseConfigured } from "@/lib/env";
 
-export const DEMO_COOKIE = "lucare-demo-session";
-
-const protectedPrefixes = [
-  "/hoy",
-  "/gym",
-  "/gimnasio",
-  "/cuidado",
-  "/cuidado-personal",
-  "/cuerpo",
-  "/sueno-habitos",
-  "/mente",
-  "/agenda",
-  "/ajustes",
-  "/habitos-mente",
-];
-
-function isProtectedPath(pathname: string): boolean {
-  return protectedPrefixes.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
-  );
-}
+const DEMO_COOKIE = "lucare-demo-session";
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  let supabaseResponse = NextResponse.next({ request });
+
+  const pathname = request.nextUrl.pathname;
+  const isPublic =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/manifest") ||
+    pathname === "/favicon.ico" ||
+    /\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$/i.test(pathname);
 
   if (isDemoMode()) {
-    const demoCookie = request.cookies.get(DEMO_COOKIE)?.value === "1";
-    if (isProtectedPath(request.nextUrl.pathname) && !demoCookie) {
+    const hasDemo = request.cookies.get(DEMO_COOKIE)?.value === "1";
+    const isApp =
+      pathname.startsWith("/hoy") ||
+      pathname.startsWith("/gym") ||
+      pathname.startsWith("/gimnasio") ||
+      pathname.startsWith("/cuidado") ||
+      pathname.startsWith("/cuidado-personal") ||
+      pathname.startsWith("/cuerpo") ||
+      pathname.startsWith("/sueno-habitos") ||
+      pathname.startsWith("/mente") ||
+      pathname.startsWith("/agenda") ||
+      pathname.startsWith("/ajustes") ||
+      pathname.startsWith("/habitos-mente");
+
+    if (isApp && !hasDemo && pathname !== "/login") {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
-    return response;
+
+    if (pathname === "/login" && hasDemo) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/hoy";
+      return NextResponse.redirect(url);
+    }
+
+    return supabaseResponse;
   }
 
   if (!supabaseConfigured()) {
-    if (isProtectedPath(request.nextUrl.pathname)) {
+    if (pathname === "/" || pathname.startsWith("/hoy")) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
-    return response;
+    return supabaseResponse;
   }
 
   const supabase = createServerClient(
@@ -55,10 +65,12 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
+            supabaseResponse.cookies.set(name, value, options),
           );
         },
       },
@@ -69,11 +81,34 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && isProtectedPath(request.nextUrl.pathname)) {
+  const protectedPrefixes = [
+    "/hoy",
+    "/gym",
+    "/gimnasio",
+    "/cuidado",
+    "/cuidado-personal",
+    "/cuerpo",
+    "/sueno-habitos",
+    "/mente",
+    "/agenda",
+    "/ajustes",
+    "/habitos-mente",
+  ];
+  const isProtected = protectedPrefixes.some((p) => pathname.startsWith(p));
+
+  if (!user && isProtected && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  return response;
+  if (user && pathname === "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/hoy";
+    return NextResponse.redirect(url);
+  }
+
+  return supabaseResponse;
 }
+
+export { DEMO_COOKIE };

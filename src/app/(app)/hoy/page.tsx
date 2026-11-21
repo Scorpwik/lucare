@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { AsyncPageFallback } from "@/components/layout/async-page-fallback";
 import { HoyPageContent } from "@/components/hoy/hoy-page-content";
 
 export const metadata = { title: "Hoy" };
@@ -9,7 +11,9 @@ export default function HoyPage() {
         <p className="silk">módulo · hoy</p>
         <h1 className="font-dot font-black text-5xl leading-[0.88] mt-1">Panel</h1>
       </header>
-      <HoyPageContent />
+      <Suspense fallback={<AsyncPageFallback />}>
+        <HoyPageContent />
+      </Suspense>
     </div>
   );
 }

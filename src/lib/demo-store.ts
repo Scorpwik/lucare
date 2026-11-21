@@ -59,25 +59,24 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-const DEFAULT_WIDGET_KEYS: WidgetKey[] = [
-  "saludo",
-  "bloqueador",
-  "rutina_am",
-  "pastillas",
-  "citas",
-  "agenda",
-  "tareas",
-  "gimnasio",
-  "cuerpo_resumen",
-  "sueno",
-  "habitos_racha",
-  "animo",
-  "cuidado_personal",
-];
-
-function seedWidgets(): DashboardWidget[] {
+function defaultWidgets(): DashboardWidget[] {
+  const keys: WidgetKey[] = [
+    "saludo",
+    "bloqueador",
+    "rutina_am",
+    "pastillas",
+    "citas",
+    "gimnasio",
+    "cuerpo_resumen",
+    "sueno",
+    "habitos_racha",
+    "animo",
+    "cuidado_personal",
+    "agenda",
+    "tareas",
+  ];
   const t = nowIso();
-  return DEFAULT_WIDGET_KEYS.map((widget_key, sort_order) => ({
+  return keys.map((widget_key, sort_order) => ({
     id: uid(),
     user_id: DEMO_USER_ID,
     widget_key,
@@ -90,12 +89,13 @@ function seedWidgets(): DashboardWidget[] {
 
 function seedSkincare(): { routines: SkincareRoutine[]; steps: SkincareStep[] } {
   const t = nowIso();
-  const rid = uid();
+  const amId = uid();
+  const pmId = uid();
   const routines: SkincareRoutine[] = [
     {
-      id: rid,
+      id: amId,
       user_id: DEMO_USER_ID,
-      name: "Rutina AM",
+      name: "Rutina mañana",
       period: "am",
       sort_order: 0,
       reminder_enabled: true,
@@ -105,14 +105,27 @@ function seedSkincare(): { routines: SkincareRoutine[]; steps: SkincareStep[] } 
       created_at: t,
       updated_at: t,
     },
+    {
+      id: pmId,
+      user_id: DEMO_USER_ID,
+      name: "Rutina noche",
+      period: "pm",
+      sort_order: 1,
+      reminder_enabled: true,
+      reminder_start_time: "20:00",
+      reminder_end_time: "22:00",
+      reminder_interval_minutes: 60,
+      created_at: t,
+      updated_at: t,
+    },
   ];
   const steps: SkincareStep[] = [
     {
       id: uid(),
       user_id: DEMO_USER_ID,
-      routine_id: rid,
-      title: "Limpiador suave",
-      product_name: "CeraVe",
+      routine_id: amId,
+      title: "Limpiador",
+      product_name: "CeraVe gel",
       scheduled_time: "07:30",
       sort_order: 0,
       reminder_enabled: false,
@@ -125,15 +138,30 @@ function seedSkincare(): { routines: SkincareRoutine[]; steps: SkincareStep[] } 
     {
       id: uid(),
       user_id: DEMO_USER_ID,
-      routine_id: rid,
-      title: "Protector solar",
-      product_name: "ISDIN",
-      scheduled_time: "08:00",
+      routine_id: amId,
+      title: "Protector solar SPF 50",
+      product_name: "Eucerin",
+      scheduled_time: "07:45",
       sort_order: 1,
-      reminder_enabled: false,
-      reminder_start_time: null,
-      reminder_end_time: null,
-      reminder_interval_minutes: null,
+      reminder_enabled: true,
+      reminder_start_time: "07:00",
+      reminder_end_time: "10:00",
+      reminder_interval_minutes: 120,
+      created_at: t,
+      updated_at: t,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      routine_id: pmId,
+      title: "Retinol",
+      product_name: "La Roche-Posay",
+      scheduled_time: "21:00",
+      sort_order: 0,
+      reminder_enabled: true,
+      reminder_start_time: "20:00",
+      reminder_end_time: "22:00",
+      reminder_interval_minutes: 60,
       created_at: t,
       updated_at: t,
     },
@@ -147,14 +175,29 @@ function seedMedications(): Medication[] {
     {
       id: uid(),
       user_id: DEMO_USER_ID,
+      name: "Omeprazol",
+      dosage: "20 mg",
+      notes: "Antes del desayuno",
+      reminder_enabled: true,
+      reminder_start_time: "07:00",
+      reminder_end_time: "08:00",
+      reminder_interval_minutes: 30,
+      reminder_times: ["07:30"],
+      is_active: true,
+      created_at: t,
+      updated_at: t,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
       name: "Vitamina D",
-      dosage: "2000 UI",
+      dosage: "1000 UI",
       notes: null,
       reminder_enabled: true,
-      reminder_start_time: "08:00",
-      reminder_end_time: "22:00",
-      reminder_interval_minutes: 720,
-      reminder_times: ["08:00", "20:00"],
+      reminder_start_time: "12:00",
+      reminder_end_time: "14:00",
+      reminder_interval_minutes: 60,
+      reminder_times: ["13:00"],
       is_active: true,
       created_at: t,
       updated_at: t,
@@ -164,19 +207,22 @@ function seedMedications(): Medication[] {
 
 function seedAppointments(): MedicalAppointment[] {
   const t = nowIso();
-  const next = new Date();
-  next.setDate(next.getDate() + 3);
-  next.setHours(10, 0, 0, 0);
+  const inDays = (n: number, hour: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    d.setHours(hour, 0, 0, 0);
+    return d.toISOString();
+  };
   return [
     {
       id: uid(),
       user_id: DEMO_USER_ID,
-      title: "Control dermatológico",
-      provider: "Dra. Méndez",
-      location: "Centro médico",
-      starts_at: next.toISOString(),
-      ends_at: null,
-      notes: null,
+      title: "Dermatología — control",
+      provider: "Dra. Mendoza",
+      location: "Hospital del Río",
+      starts_at: inDays(3, 10),
+      ends_at: inDays(3, 11),
+      notes: "Llevar historial",
       reminder_enabled: true,
       reminder_minutes_before: 60,
       created_at: t,
@@ -187,16 +233,24 @@ function seedAppointments(): MedicalAppointment[] {
 
 function seedTasks(): Task[] {
   const t = nowIso();
-  const due = new Date();
-  due.setHours(18, 0, 0, 0);
   return [
     {
       id: uid(),
       user_id: DEMO_USER_ID,
-      title: "Revisar agenda semanal",
-      due_at: due.toISOString(),
+      title: "Renovar receta de Omeprazol",
+      due_at: null,
       completed: false,
-      module_source: "manual",
+      module_source: "medications",
+      created_at: t,
+      updated_at: t,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      title: "Comprar repuesto de SPF",
+      due_at: null,
+      completed: false,
+      module_source: "skincare",
       created_at: t,
       updated_at: t,
     },
@@ -205,56 +259,36 @@ function seedTasks(): Task[] {
 
 function seedEvents(): ExternalCalendarEvent[] {
   const t = nowIso();
-  const items: ExternalCalendarEvent[] = [];
-  const base = new Date();
-  base.setMinutes(0, 0, 0);
-
-  const gym = new Date(base);
-  gym.setHours(17, 0, 0, 0);
-  items.push({
-    id: uid(),
-    user_id: DEMO_USER_ID,
-    provider: "google_calendar",
-    external_id: "demo-gym",
-    title: "Gimnasio · pecho",
-    starts_at: gym.toISOString(),
-    ends_at: new Date(gym.getTime() + 90 * 60_000).toISOString(),
-    source_label: "Google",
-    synced_at: t,
-  });
-
-  const study = new Date(base);
-  study.setHours(20, 0, 0, 0);
-  items.push({
-    id: uid(),
-    user_id: DEMO_USER_ID,
-    provider: "notion_deberes",
-    external_id: "demo-hw",
-    title: "Entregar informe de cálculo",
-    starts_at: study.toISOString(),
-    ends_at: null,
-    source_label: "Notion",
-    synced_at: t,
-  });
-
-  const meet = new Date(base);
-  meet.setDate(meet.getDate() + 1);
-  meet.setHours(9, 30, 0, 0);
-  items.push({
-    id: uid(),
-    user_id: DEMO_USER_ID,
-    provider: "google_calendar",
-    external_id: "demo-meet",
-    title: "Reunión proyecto LuCare",
-    starts_at: meet.toISOString(),
-    ends_at: new Date(meet.getTime() + 45 * 60_000).toISOString(),
-    source_label: "Google",
-    synced_at: t,
-  });
-
-  return items.sort(
-    (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
-  );
+  const start = new Date();
+  start.setHours(15, 30, 0, 0);
+  const end = new Date();
+  end.setHours(16, 30, 0, 0);
+  return [
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      provider: "google_calendar",
+      external_id: "demo-gcal-1",
+      title: "Reunión equipo salud",
+      starts_at: start.toISOString(),
+      ends_at: end.toISOString(),
+      source_label: "Google",
+      raw: {},
+      synced_at: t,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      provider: "notion_deberes",
+      external_id: "demo-notion-1",
+      title: "Entregar informe mensual",
+      starts_at: new Date(Date.now() + 86_400_000).toISOString(),
+      ends_at: null,
+      source_label: "Notion",
+      raw: {},
+      synced_at: t,
+    },
+  ];
 }
 
 function seedGym(): {
@@ -517,7 +551,7 @@ export function createDefaultDemoState(): DemoState {
   return {
     userId: DEMO_USER_ID,
     displayName: "Joshua",
-    widgets: seedWidgets(),
+    widgets: defaultWidgets(),
     routines,
     steps,
     medications: seedMedications(),
@@ -541,33 +575,65 @@ export function createDefaultDemoState(): DemoState {
   };
 }
 
-let serverState: DemoState | null = null;
+let memoryState: DemoState | null = null;
 
-export function getServerDemoState(): DemoState {
-  if (!serverState) serverState = createDefaultDemoState();
-  return serverState;
+function loadFromStorage(): DemoState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as DemoState;
+  } catch {
+    return null;
+  }
+}
+
+function saveToStorage(state: DemoState): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    /* cuota llena */
+  }
 }
 
 export function getDemoState(): DemoState {
-  if (typeof window === "undefined") return getServerDemoState();
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    try {
-      return JSON.parse(raw) as DemoState;
-    } catch {
-      /* regenerar */
+  if (typeof window !== "undefined") {
+    const stored = loadFromStorage();
+    if (stored) {
+      memoryState = stored;
+      return stored;
     }
   }
-  const fresh = createDefaultDemoState();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
-  return fresh;
+  if (!memoryState) {
+    memoryState = createDefaultDemoState();
+    saveToStorage(memoryState);
+  }
+  return memoryState;
 }
 
-export function setDemoState(updater: (prev: DemoState) => DemoState): void {
+export function setDemoState(updater: (prev: DemoState) => DemoState): DemoState {
   const next = updater(getDemoState());
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } else {
-    serverState = next;
-  }
+  memoryState = next;
+  saveToStorage(next);
+  return next;
 }
+
+export function resetDemoState(): DemoState {
+  memoryState = createDefaultDemoState();
+  saveToStorage(memoryState);
+  return memoryState;
+}
+
+/** Versión servidor — sin localStorage */
+let serverDemoState: DemoState = createDefaultDemoState();
+
+export function getServerDemoState(): DemoState {
+  return serverDemoState;
+}
+
+export function setServerDemoState(state: DemoState): void {
+  serverDemoState = state;
+}
+
+export const DEMO_USER = DEMO_USER_ID;
