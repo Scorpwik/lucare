@@ -16,6 +16,7 @@ import {
 import { getDemoState } from "@/lib/demo-store";
 import { isDemoModeClient } from "@/lib/env";
 import { useClientNow } from "@/lib/use-client-time";
+import { confirmDelete } from "@/lib/feedback";
 import { toast } from "sonner";
 
 type Props = {
@@ -104,6 +105,7 @@ export function MentePanel({ initialMoods, initialJournal }: Props) {
   };
 
   const removeJournal = async (id: string) => {
+    if (!confirmDelete("¿Eliminar esta entrada del journal?")) return;
     const ok = await clientDeleteJournal(id);
     if (!ok) {
       toast.error("No se pudo eliminar");
@@ -111,6 +113,7 @@ export function MentePanel({ initialMoods, initialJournal }: Props) {
     }
     if (isDemoModeClient()) refreshDemo();
     else setJournal((prev) => prev.filter((j) => j.id !== id));
+    toast.success("Entrada eliminada");
   };
 
   const stopBreathing = React.useCallback(() => {

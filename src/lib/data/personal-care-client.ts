@@ -5,16 +5,20 @@ import { isDemoModeClient } from "@/lib/env";
 import type { PersonalCareRoutine } from "@/lib/types";
 import type { PersonalRoutineInput } from "@/lib/data/personal-care";
 
-export function clientUpsertPersonalRoutine(
+export async function clientUpsertPersonalRoutine(
   id: string | null,
   input: PersonalRoutineInput,
-): void {
+): Promise<void> {
   if (!isDemoModeClient()) {
-    void fetch("/api/personal-care/routines", {
+    const res = await fetch("/api/personal-care/routines", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, ...input }),
     });
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(data.error ?? "No se pudo guardar la rutina");
+    }
     return;
   }
   setDemoState((prev) => {

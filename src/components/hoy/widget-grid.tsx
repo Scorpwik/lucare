@@ -26,6 +26,7 @@ import {
   clientToggleWidget,
 } from "@/lib/data/dashboard-client";
 import { isDemoModeClient } from "@/lib/env";
+import { friendlyError } from "@/lib/feedback";
 import { EmptyState } from "@/components/lucare/empty-state";
 import { ErrorState } from "@/components/lucare/error-state";
 import { LoadingState } from "@/components/lucare/loading-state";
@@ -109,7 +110,7 @@ export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
       const next = await clientFetchWidgets();
       setWidgets(next);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al cargar widgets");
+      setError(friendlyError(e, "Error al cargar widgets"));
     } finally {
       setLoading(false);
     }

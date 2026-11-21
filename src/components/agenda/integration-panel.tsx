@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { friendlyError } from "@/lib/feedback";
 import { toast } from "sonner";
 import type { IntegrationStatus } from "@/lib/data/integrations";
 import { GlassCard } from "@/components/lucare/glass-card";
@@ -44,12 +45,20 @@ export function IntegrationPanel({ initial }: Props) {
   };
 
   const disconnectGoogle = async () => {
+    if (!window.confirm("¿Desconectar Google Calendar?")) return;
     setBusy("google_calendar");
     try {
-      await fetch("/api/integrations/google", { method: "DELETE" });
+      const res = await fetch("/api/integrations/google", { method: "DELETE" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error(friendlyError(data.error, "No se pudo desconectar Google"));
+        return;
+      }
       await refreshStatuses();
       toast.success("Google Calendar desconectado");
       router.refresh();
+    } catch (e) {
+      toast.error(friendlyError(e));
     } finally {
       setBusy(null);
     }
@@ -60,10 +69,12 @@ export function IntegrationPanel({ initial }: Props) {
     try {
       const res = await fetch("/api/integrations/google", { method: "POST" });
       const data = await res.json();
-      if (!res.ok || data.ok === false) toast.error(data.error ?? "Error al sincronizar");
+      if (!res.ok || data.ok === false) toast.error(friendlyError(data.error, "Error al sincronizar"));
       else toast.success(`Google: ${data.count ?? 0} eventos`);
       await refreshStatuses();
       router.refresh();
+    } catch (e) {
+      toast.error(friendlyError(e));
     } finally {
       setBusy(null);
     }
@@ -78,22 +89,32 @@ export function IntegrationPanel({ initial }: Props) {
       }
       const res = await fetch("/api/integrations/notion", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) toast.error(data.error ?? "No se pudo activar Notion");
+      if (!res.ok) toast.error(friendlyError(data.error, "No se pudo activar Notion"));
       else toast.success(`Notion: ${data.count ?? 0} deberes`);
       await refreshStatuses();
       router.refresh();
+    } catch (e) {
+      toast.error(friendlyError(e));
     } finally {
       setBusy(null);
     }
   };
 
   const disconnectNotion = async () => {
+    if (!window.confirm("¿Desactivar la sincronización con Notion?")) return;
     setBusy("notion_deberes");
     try {
-      await fetch("/api/integrations/notion", { method: "DELETE" });
+      const res = await fetch("/api/integrations/notion", { method: "DELETE" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error(friendlyError(data.error, "No se pudo desactivar Notion"));
+        return;
+      }
       await refreshStatuses();
       toast.success("Notion desactivado");
       router.refresh();
+    } catch (e) {
+      toast.error(friendlyError(e));
     } finally {
       setBusy(null);
     }
@@ -109,6 +130,8 @@ export function IntegrationPanel({ initial }: Props) {
       await refreshStatuses();
       toast.success("Sincronización solicitada");
       router.refresh();
+    } catch (e) {
+      toast.error(friendlyError(e));
     } finally {
       setBusy(null);
     }

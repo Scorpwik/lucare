@@ -18,6 +18,7 @@ import {
 } from "@/lib/data/body-client";
 import { clientFetchBodyMetrics } from "@/lib/data/body-client";
 import { useClientNow } from "@/lib/use-client-time";
+import { confirmDelete } from "@/lib/feedback";
 import { toast } from "sonner";
 
 type Props = {
@@ -114,6 +115,7 @@ export function CuerpoPanel({
   };
 
   const removeMetric = async (id: string) => {
+    if (!confirmDelete("¿Eliminar este registro de medidas?")) return;
     const ok = await clientDeleteBodyMetric(id);
     if (!ok) {
       toast.error("No se pudo eliminar");
@@ -138,6 +140,7 @@ export function CuerpoPanel({
   };
 
   const removePhoto = async (id: string) => {
+    if (!confirmDelete("¿Eliminar esta foto de progreso?")) return;
     const ok = await clientDeleteProgressPhoto(id);
     if (!ok) {
       toast.error("No se pudo eliminar");

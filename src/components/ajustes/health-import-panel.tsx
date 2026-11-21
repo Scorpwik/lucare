@@ -6,6 +6,7 @@ import type { HealthSampleSource } from "@/lib/types";
 import { GlassCard } from "@/components/lucare/glass-card";
 import { LcButton } from "@/components/lucare/lc-button";
 import { Label } from "@/components/ui/label";
+import { friendlyError } from "@/lib/feedback";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
 
@@ -46,12 +47,14 @@ export function HealthImportPanel() {
         error?: string;
       };
       if (!res.ok) {
-        toast.error(data.error ?? "Error al analizar");
+        toast.error(friendlyError(data.error, "Error al analizar"));
         return;
       }
       setPreview(data.preview ?? null);
       setRows(data.rows ?? []);
       toast.success("Vista previa lista");
+    } catch (e) {
+      toast.error(friendlyError(e));
     } finally {
       setBusy(false);
     }
@@ -72,7 +75,7 @@ export function HealthImportPanel() {
         error?: string;
       };
       if (!res.ok) {
-        toast.error(data.error ?? "Importación fallida");
+        toast.error(friendlyError(data.error, "Importación fallida"));
         return;
       }
       const applied = data.applied;
@@ -87,6 +90,8 @@ export function HealthImportPanel() {
       setPreview(null);
       setRows([]);
       setFile(null);
+    } catch (e) {
+      toast.error(friendlyError(e));
     } finally {
       setBusy(false);
     }

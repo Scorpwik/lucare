@@ -21,6 +21,7 @@ import { clientUpsertRoutine } from "@/lib/data/skincare-client";
 import { getDemoState } from "@/lib/demo-store";
 import { isDemoModeClient } from "@/lib/env";
 import { useRouter } from "next/navigation";
+import { confirmDelete } from "@/lib/feedback";
 import { toast } from "sonner";
 
 type Props = {
@@ -146,6 +147,7 @@ export function CuidadoTabs({
   };
 
   const removeAppt = async (id: string) => {
+    if (!confirmDelete("¿Eliminar esta cita?")) return;
     const ok = await clientDeleteAppointment(id);
     if (!ok) {
       toast.error("No se pudo eliminar la cita");

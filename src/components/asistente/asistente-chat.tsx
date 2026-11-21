@@ -6,6 +6,7 @@ import { GlassCard } from "@/components/lucare/glass-card";
 import { LcButton } from "@/components/lucare/lc-button";
 import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
+import { friendlyError } from "@/lib/feedback";
 import { toast } from "sonner";
 
 type ChatMessage = {
@@ -57,7 +58,11 @@ export function AsistenteChat() {
         error?: string;
       };
       if (!res.ok) {
-        toast.error(data.error ?? "No se pudo enviar el mensaje");
+        if (res.status === 429) {
+          toast.error("Demasiados mensajes. Espera un momento e inténtalo de nuevo.");
+        } else {
+          toast.error(friendlyError(data.error, "No se pudo enviar el mensaje"));
+        }
         return;
       }
       setMessages((prev) => [
@@ -69,8 +74,8 @@ export function AsistenteChat() {
           isDemo: data.isDemo,
         },
       ]);
-    } catch {
-      toast.error("Error de red");
+    } catch (e) {
+      toast.error(friendlyError(e, "Sin conexión. Revisa tu internet."));
     } finally {
       setBusy(false);
     }

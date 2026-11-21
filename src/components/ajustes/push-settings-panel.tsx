@@ -12,6 +12,7 @@ import {
 } from "@/lib/push/client";
 import { vapidConfiguredClient } from "@/lib/push/vapid-public";
 import { Bell, BellOff } from "lucide-react";
+import { friendlyError } from "@/lib/feedback";
 import { toast } from "sonner";
 
 type PushStatus = {
@@ -93,7 +94,7 @@ export function PushSettingsPanel() {
           description: "Define NEXT_PUBLIC_VAPID_PUBLIC_KEY y VAPID_PRIVATE_KEY.",
         });
       } else {
-        toast.error(result.message ?? "No se pudo activar push");
+        toast.error(friendlyError(result.message, "No se pudo activar push"));
       }
       return;
     }
@@ -107,7 +108,7 @@ export function PushSettingsPanel() {
     const result = await unsubscribeFromWebPush();
     setBusy(false);
     if (!result.ok) {
-      toast.error(result.message ?? "No se pudo desactivar push");
+      toast.error(friendlyError(result.message, "No se pudo desactivar push"));
       return;
     }
     setSubscribed(false);
@@ -126,7 +127,7 @@ export function PushSettingsPanel() {
           skipped?: string;
         };
         if (!res.ok) {
-          toast.error(data.error ?? "No se pudo enviar la prueba");
+          toast.error(friendlyError(data.error, "No se pudo enviar la prueba"));
         } else if (data.skipped === "vapid") {
           toast.message("VAPID no configurado", {
             description: "Usa una notificación local en su lugar.",
@@ -139,13 +140,13 @@ export function PushSettingsPanel() {
             data.sent ? `Prueba enviada (${data.sent})` : "Prueba enviada",
           );
         }
-      } catch {
-        toast.error("Error de red al probar push");
+      } catch (e) {
+        toast.error(friendlyError(e, "Error de red al probar push"));
       }
     } else {
       const local = await showLocalTestNotification();
       if (local.ok) toast.success("Notificación local mostrada");
-      else toast.error(local.message ?? "No se pudo probar");
+      else toast.error(friendlyError(local.message, "No se pudo probar"));
     }
     setBusy(false);
   };

@@ -23,6 +23,8 @@ import {
 import { getDemoState } from "@/lib/demo-store";
 import { isDemoModeClient } from "@/lib/env";
 import { useClientNow } from "@/lib/use-client-time";
+import { confirmDelete } from "@/lib/feedback";
+import { EmptyState } from "@/components/lucare/empty-state";
 import { toast } from "sonner";
 
 type Props = {
@@ -209,6 +211,7 @@ export function SuenoHabitosPanel({
   };
 
   const removeHabit = async (id: string) => {
+    if (!confirmDelete("¿Archivar este hábito?")) return;
     const ok = await clientDeleteHabit(id);
     if (!ok) {
       toast.error("No se pudo eliminar");
@@ -410,7 +413,10 @@ export function SuenoHabitosPanel({
 
           <ul className="space-y-3">
             {habits.length === 0 && (
-              <p className="text-sm text-muted-foreground">Crea tu primer hábito diario.</p>
+              <EmptyState
+                title="Sin hábitos"
+                description="Crea tu primer hábito diario con el botón de arriba."
+              />
             )}
             {habits.map((h) => {
               const streak = computeStreakToDate(

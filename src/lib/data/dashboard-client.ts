@@ -3,6 +3,7 @@
 import { getDemoState, setDemoState } from "@/lib/demo-store";
 import { isDemoModeClient } from "@/lib/env";
 import type { DashboardWidget, WidgetKey } from "@/lib/types";
+import { friendlyError } from "@/lib/feedback";
 import { toast } from "sonner";
 
 export function clientGetWidgets(): DashboardWidget[] {
@@ -41,7 +42,7 @@ export async function clientToggleWidget(key: WidgetKey, visible: boolean): Prom
   });
   if (!res.ok) {
     const data = (await res.json().catch(() => null)) as { error?: string } | null;
-    toast.error(data?.error ?? "No se pudo actualizar el widget");
+    toast.error(friendlyError(data?.error, "No se pudo actualizar el widget"));
     throw new Error(data?.error ?? "patch visibility");
   }
 }
@@ -68,7 +69,7 @@ export async function clientReorderWidgets(orderedKeys: WidgetKey[]): Promise<vo
   });
   if (!res.ok) {
     const data = (await res.json().catch(() => null)) as { error?: string } | null;
-    toast.error(data?.error ?? "No se pudo reordenar");
+    toast.error(friendlyError(data?.error, "No se pudo reordenar"));
     throw new Error(data?.error ?? "patch reorder");
   }
 }

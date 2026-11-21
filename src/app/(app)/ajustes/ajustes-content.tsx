@@ -1,4 +1,5 @@
 import { HealthImportPanel } from "@/components/ajustes/health-import-panel";
+import { PasswordSettingsPanel } from "@/components/ajustes/password-settings-panel";
 import { PushSettingsPanel } from "@/components/ajustes/push-settings-panel";
 import { IntegrationPanel } from "@/components/agenda/integration-panel";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -55,6 +56,8 @@ export async function AjustesContent({
       </GlassCard>
 
       <PushSettingsPanel />
+
+      <PasswordSettingsPanel />
 
       <IntegrationPanel initial={statuses} />
 

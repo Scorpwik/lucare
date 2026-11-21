@@ -37,6 +37,7 @@ import {
 import { isDemoModeClient } from "@/lib/env";
 import { useClientNow } from "@/lib/use-client-time";
 import { useRouter } from "next/navigation";
+import { confirmDelete } from "@/lib/feedback";
 import { toast } from "sonner";
 
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -306,6 +307,7 @@ export function GimnasioTabs({
   };
 
   const removeTemplate = async (id: string) => {
+    if (!confirmDelete("¿Eliminar esta plantilla de entrenamiento?")) return;
     const ok = await clientDeleteTemplate(id);
     if (!ok) {
       toast.error("No se pudo eliminar");
@@ -367,6 +369,7 @@ export function GimnasioTabs({
   };
 
   const removeExercise = async (id: string) => {
+    if (!confirmDelete("¿Eliminar este ejercicio?")) return;
     const ok = await clientDeleteExercise(id);
     if (!ok) {
       toast.error("No se puede eliminar: hay series registradas");

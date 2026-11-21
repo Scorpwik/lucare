@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { clientUpsertPersonalRoutine } from "@/lib/data/personal-care-client";
 import { getDemoState } from "@/lib/demo-store";
+import { EmptyState } from "@/components/lucare/empty-state";
+import { friendlyError } from "@/lib/feedback";
 import { toast } from "sonner";
 
 type Props = {
@@ -27,11 +29,16 @@ export function CuidadoPersonalPanel({ routines: initialRoutines, steps }: Props
     reminder_interval_minutes: 60,
   });
 
-  const save = (e: React.FormEvent) => {
+  const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    clientUpsertPersonalRoutine(null, form);
-    setRoutines(getDemoState().personalCareRoutines);
-    toast.success("Rutina guardada");
+    try {
+      await clientUpsertPersonalRoutine(null, form);
+      setRoutines(getDemoState().personalCareRoutines);
+      toast.success("Rutina guardada");
+    } catch (err) {
+      toast.error(friendlyError(err));
+      return;
+    }
     setForm({
       name: "",
       category: "general",
@@ -46,6 +53,12 @@ export function CuidadoPersonalPanel({ routines: initialRoutines, steps }: Props
     <div className="grid gap-4 lg:grid-cols-2">
       <GlassCard className="p-4 space-y-3">
         <p className="silk">rutinas</p>
+        {routines.length === 0 && (
+          <EmptyState
+            title="Sin rutinas"
+            description="Crea una rutina de cuidado personal con el formulario."
+          />
+        )}
         {routines.map((r) => (
           <article key={r.id} className="border-b border-border pb-3 text-sm">
             <p className="font-medium">{r.name}</p>

@@ -22,7 +22,11 @@ export async function HoyPageContent() {
   const initialWidgets = await fetchDashboardWidgets();
 
   const childrenMap: Record<WidgetKey, React.ReactNode> = {
-    saludo: <SaludoWidget />,
+    saludo: (
+      <Suspense fallback={<LoadingState />}>
+        <SaludoWidget />
+      </Suspense>
+    ),
     ia_insight: (
       <Suspense fallback={<LoadingState />}>
         <IaInsightWidget />
