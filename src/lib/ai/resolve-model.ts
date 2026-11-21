@@ -53,11 +53,10 @@ export type AiCallOptions = {
   model: LanguageModel;
   abortSignal: AbortSignal;
   maxRetries: number;
-  providerOptions?: { google: { thinkingConfig: { thinkingLevel: "minimal" } } };
 };
 
 /** Tiempo máximo por intento, para no agotar el límite de la función en un solo proveedor. */
-const ATTEMPT_TIMEOUT_MS = 15_000;
+const ATTEMPT_TIMEOUT_MS = 25_000;
 
 export async function runWithAiFallback<T>(
   label: string,
@@ -73,10 +72,6 @@ export async function runWithAiFallback<T>(
         model: c.model,
         abortSignal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
         maxRetries: 0,
-        providerOptions:
-          c.provider === "gemini"
-            ? { google: { thinkingConfig: { thinkingLevel: "minimal" } } }
-            : undefined,
       });
       console.info(`[ai:${label}] ok ${c.provider}/${c.modelId} en ${Date.now() - started} ms`);
       return result;
