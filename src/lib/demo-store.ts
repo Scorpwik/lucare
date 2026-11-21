@@ -1,4 +1,5 @@
 import type {
+  BodyGoal,
   BodyMetric,
   DashboardWidget,
   ExternalCalendarEvent,
@@ -40,6 +41,7 @@ export interface DemoState {
   workoutSessions: WorkoutSession[];
   workoutSets: WorkoutSet[];
   bodyMetrics: BodyMetric[];
+  bodyGoal: BodyGoal | null;
   progressPhotos: ProgressPhoto[];
   sleepLogs: SleepLog[];
   habits: Habit[];
@@ -444,26 +446,97 @@ function seedGym(): {
   return { templates, exercises, sessions, sets };
 }
 
-function seedBody(): { metrics: BodyMetric[]; photos: ProgressPhoto[] } {
+function daysAgoIso(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+function seedBody(): {
+  metrics: BodyMetric[];
+  goal: BodyGoal;
+  photos: ProgressPhoto[];
+} {
   const t = nowIso();
-  const d = new Date().toISOString().slice(0, 10);
-  return {
-    metrics: [
-      {
-        id: uid(),
-        user_id: DEMO_USER_ID,
-        recorded_at: d,
-        weight_kg: 78.4,
-        waist_cm: 84,
-        chest_cm: 102,
-        hips_cm: 96,
-        notes: null,
-        created_at: t,
-        updated_at: t,
-      },
-    ],
-    photos: [],
+  const metrics: BodyMetric[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      recorded_at: daysAgoIso(21),
+      weight_kg: 79.8,
+      waist_cm: 86,
+      chest_cm: 101,
+      hips_cm: 97,
+      body_fat_pct: 19.2,
+      muscle_mass_kg: 36.5,
+      arm_cm: 34,
+      thigh_cm: 58,
+      notes: null,
+      created_at: t,
+      updated_at: t,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      recorded_at: daysAgoIso(14),
+      weight_kg: 79.1,
+      waist_cm: 85,
+      chest_cm: 101.5,
+      hips_cm: 96.5,
+      body_fat_pct: 18.8,
+      muscle_mass_kg: 36.8,
+      arm_cm: 34.2,
+      thigh_cm: 57.5,
+      notes: null,
+      created_at: t,
+      updated_at: t,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      recorded_at: daysAgoIso(7),
+      weight_kg: 78.9,
+      waist_cm: 84.5,
+      chest_cm: 102,
+      hips_cm: 96,
+      body_fat_pct: 18.5,
+      muscle_mass_kg: 37,
+      arm_cm: 34.5,
+      thigh_cm: 57,
+      notes: null,
+      created_at: t,
+      updated_at: t,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      recorded_at: new Date().toISOString().slice(0, 10),
+      weight_kg: 78.4,
+      waist_cm: 84,
+      chest_cm: 102,
+      hips_cm: 96,
+      body_fat_pct: 18.1,
+      muscle_mass_kg: 37.2,
+      arm_cm: 34.5,
+      thigh_cm: 56.8,
+      notes: null,
+      created_at: t,
+      updated_at: t,
+    },
+  ];
+  const goal: BodyGoal = {
+    id: uid(),
+    user_id: DEMO_USER_ID,
+    target_weight_kg: 75,
+    target_waist_cm: 80,
+    target_body_fat_pct: 16,
+    reminder_time: "07:30",
+    reminder_enabled: true,
+    notes: null,
+    created_at: t,
+    updated_at: t,
   };
+  return { metrics, goal, photos: [] };
 }
 
 function seedSleepHabits(): {
@@ -626,6 +699,7 @@ export function createDefaultDemoState(): DemoState {
     workoutSessions: gym.sessions,
     workoutSets: gym.sets,
     bodyMetrics: body.metrics,
+    bodyGoal: body.goal,
     progressPhotos: body.photos,
     sleepLogs: sleepHabits.sleep,
     habits: sleepHabits.habits,

@@ -1,11 +1,22 @@
 import { CuerpoPanel } from "@/components/cuerpo/cuerpo-panel";
-import { fetchBodyMetrics, fetchProgressPhotos } from "@/lib/data/body";
+import {
+  fetchBodyGoal,
+  fetchBodyMetrics,
+  fetchProgressPhotos,
+} from "@/lib/data/body";
 
 export async function CuerpoPageContent() {
-  const [metrics, photos] = await Promise.all([
+  const [metrics, photos, goal] = await Promise.all([
     fetchBodyMetrics(),
     fetchProgressPhotos(),
+    fetchBodyGoal(),
   ]);
 
-  return <CuerpoPanel initialMetrics={metrics} initialPhotos={photos} />;
+  return (
+    <CuerpoPanel
+      initialMetrics={metrics}
+      initialPhotos={photos}
+      initialGoal={goal}
+    />
+  );
 }

@@ -264,6 +264,23 @@ export interface BodyMetric {
   waist_cm: number | null;
   chest_cm: number | null;
   hips_cm: number | null;
+  body_fat_pct: number | null;
+  muscle_mass_kg: number | null;
+  arm_cm: number | null;
+  thigh_cm: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BodyGoal {
+  id: string;
+  user_id: string;
+  target_weight_kg: number | null;
+  target_waist_cm: number | null;
+  target_body_fat_pct: number | null;
+  reminder_time: string | null;
+  reminder_enabled: boolean;
   notes: string | null;
   created_at: string;
   updated_at: string;
