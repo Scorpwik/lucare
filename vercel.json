@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sunscreen",
+      "schedule": "0 12 * * *"
+    }
+  ]
+}

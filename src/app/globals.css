@@ -383,6 +383,16 @@ body::after {
   }
 }
 
+@keyframes lucas-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

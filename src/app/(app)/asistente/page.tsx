@@ -13,17 +13,17 @@ const promptHints = [
 
 export default function AsistentePage() {
   return (
-    <div>
+    <div className="flex flex-col min-h-[calc(100dvh-8rem)] lg:min-h-[calc(100dvh-6rem)]">
       <PageHeading
         module="módulo · ia"
         title="Asistente"
         description="Responde con base en tus registros de LuCare. No sustituye el consejo médico."
       />
-      <div className="xl:grid xl:grid-cols-12 xl:gap-5 items-start">
-        <div className="xl:col-span-8 max-w-[52rem] xl:max-w-none">
-          <AsistenteChat />
+      <div className="flex-1 min-h-0 flex flex-col xl:grid xl:grid-cols-12 xl:gap-5 xl:items-stretch">
+        <div className="flex-1 min-h-0 flex flex-col xl:col-span-8 max-w-[52rem] xl:max-w-none">
+          <AsistenteChat className="flex-1 min-h-0" />
         </div>
-        <aside className="hidden xl:block xl:col-span-4 space-y-4">
+        <aside className="hidden xl:flex xl:col-span-4 flex-col gap-4 min-h-0">
           <GlassCard className="p-4">
             <p className="silk mb-2">sugerencias</p>
             <ul className="space-y-2 text-sm text-muted-foreground">

@@ -16,7 +16,7 @@ type ChatMessage = {
   isDemo?: boolean;
 };
 
-export function AsistenteChat() {
+export function AsistenteChat({ className }: { className?: string }) {
   const [messages, setMessages] = React.useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -28,6 +28,11 @@ export function AsistenteChat() {
   ]);
   const [input, setInput] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+  const endRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages]);
 
   const send = async () => {
     const text = input.trim();
@@ -82,10 +87,10 @@ export function AsistenteChat() {
   };
 
   return (
-    <GlassCard className="p-4 flex flex-col min-h-[420px]">
-      <p className="silk mb-1">conversación</p>
-      <p className="text-[10px] text-muted-foreground mb-3">{AI_MEDICAL_DISCLAIMER}</p>
-      <div className="flex-1 space-y-3 overflow-y-auto max-h-[50dvh] pr-1 mb-3">
+    <GlassCard className={`p-4 flex flex-col min-h-[min(32rem,60dvh)] lg:min-h-0 lg:h-full ${className ?? ""}`}>
+      <p className="silk mb-1 shrink-0">conversación</p>
+      <p className="text-[10px] text-muted-foreground mb-3 shrink-0">{AI_MEDICAL_DISCLAIMER}</p>
+      <div className="flex-1 min-h-0 space-y-3 overflow-y-auto pr-1 mb-3">
         {messages.map((m) => (
           <div
             key={m.id}
@@ -102,9 +107,10 @@ export function AsistenteChat() {
             <p className="whitespace-pre-wrap">{m.content}</p>
           </div>
         ))}
+        <div ref={endRef} />
       </div>
       <form
-        className="flex gap-2"
+        className="flex gap-2 shrink-0"
         onSubmit={(e) => {
           e.preventDefault();
           void send();

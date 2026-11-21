@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { WidgetGrid } from "@/components/hoy/widget-grid";
+import { HoyDashboard } from "@/components/hoy/hoy-dashboard";
 import { SaludoWidget } from "@/components/hoy/widgets/saludo-widget";
 import { BloqueadorWidget } from "@/components/hoy/widgets/bloqueador-widget";
 import { LoadingState } from "@/components/lucare/loading-state";
@@ -86,5 +86,5 @@ export async function HoyPageContent() {
     tareas: <TareasWidget />,
   };
 
-  return <WidgetGrid childrenMap={childrenMap} initialWidgets={initialWidgets} />;
+  return <HoyDashboard childrenMap={childrenMap} initialWidgets={initialWidgets} />;
 }

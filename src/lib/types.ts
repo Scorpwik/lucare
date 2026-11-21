@@ -82,6 +82,16 @@ export interface DashboardWidget {
   updated_at: string;
 }
 
+export interface UserSunscreenSettings {
+  user_id: string;
+  last_applied_at: string | null;
+  reapply_interval_minutes: number;
+  next_due_at: string | null;
+  last_notified_due_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PushSubscription {
   id: string;
   user_id: string;

@@ -24,7 +24,9 @@ import type {
   WorkoutSession,
   WorkoutSet,
   WorkoutTemplate,
+  UserSunscreenSettings,
 } from "@/lib/types";
+import { DEFAULT_SUNSCREEN_INTERVAL_MIN } from "@/lib/sunscreen";
 
 const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
 const STORAGE_KEY = "lucare-demo-v2";
@@ -57,6 +59,7 @@ export interface DemoState {
   dailyActivities: DailyActivity[];
   heartRateSamples: HeartRateSample[];
   aiDailyInsights: AiDailyInsight[];
+  sunscreenSettings: UserSunscreenSettings;
 }
 
 function uid(): string {
@@ -692,6 +695,21 @@ function seedPersonalCare(): {
   };
 }
 
+function defaultSunscreenSettings(): UserSunscreenSettings {
+  const t = nowIso();
+  const applied = new Date(Date.now() - 45 * 60_000).toISOString();
+  const next = new Date(Date.now() + 75 * 60_000).toISOString();
+  return {
+    user_id: DEMO_USER_ID,
+    last_applied_at: applied,
+    reapply_interval_minutes: DEFAULT_SUNSCREEN_INTERVAL_MIN,
+    next_due_at: next,
+    last_notified_due_at: null,
+    created_at: t,
+    updated_at: t,
+  };
+}
+
 export function createDefaultDemoState(): DemoState {
   const { routines, steps } = seedSkincare();
   const gym = seedGym();
@@ -727,6 +745,7 @@ export function createDefaultDemoState(): DemoState {
     dailyActivities: [],
     heartRateSamples: [],
     aiDailyInsights: [],
+    sunscreenSettings: defaultSunscreenSettings(),
   };
 }
 
@@ -760,6 +779,7 @@ function mergeDemoState(partial: DemoState): DemoState {
     dailyActivities: partial.dailyActivities ?? [],
     heartRateSamples: partial.heartRateSamples ?? [],
     aiDailyInsights: partial.aiDailyInsights ?? [],
+    sunscreenSettings: partial.sunscreenSettings ?? defaultSunscreenSettings(),
   };
 }
 

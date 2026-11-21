@@ -4,6 +4,7 @@ import { DesktopSidebar } from "./desktop-sidebar";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { MobileFab } from "./mobile-fab";
 import { ThemeToggle } from "./theme-toggle";
+import { LucasCompanion } from "@/components/lucas/lucas-companion";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <MobileTabBar />
       <MobileFab />
+      <LucasCompanion />
     </div>
   );
 }

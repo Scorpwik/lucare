@@ -1,4 +1,5 @@
 import { sendNotification } from "web-push";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { ensureWebPushConfigured, vapidConfigured } from "@/lib/push/vapid";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,13 +19,21 @@ export async function sendPushToUser(
   userId: string,
   payload: PushPayload,
 ): Promise<SendPushResult> {
+  const supabase = await createClient();
+  return sendPushToUserWithClient(supabase, userId, payload);
+}
+
+export async function sendPushToUserWithClient(
+  supabase: SupabaseClient,
+  userId: string,
+  payload: PushPayload,
+): Promise<SendPushResult> {
   if (!vapidConfigured()) {
     return { sent: 0, failed: 0, removed: 0, skipped: "vapid" };
   }
 
   ensureWebPushConfigured();
 
-  const supabase = await createClient();
   const { data: subs, error } = await supabase
     .from("push_subscriptions")
     .select("id, endpoint, p256dh, auth")
@@ -62,10 +71,7 @@ export async function sendPushToUser(
             ? (err as { statusCode?: number }).statusCode
             : undefined;
         if (status === 404 || status === 410) {
-          await supabase
-            .from("push_subscriptions")
-            .delete()
-            .eq("id", sub.id);
+          await supabase.from("push_subscriptions").delete().eq("id", sub.id);
           removed += 1;
         }
       }

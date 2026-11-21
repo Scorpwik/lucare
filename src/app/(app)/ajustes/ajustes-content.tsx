@@ -1,4 +1,5 @@
 import { HealthImportPanel } from "@/components/ajustes/health-import-panel";
+import { LucasSettingsPanel } from "@/components/ajustes/lucas-settings-panel";
 import { PasswordSettingsPanel } from "@/components/ajustes/password-settings-panel";
 import { PushSettingsPanel } from "@/components/ajustes/push-settings-panel";
 import { IntegrationPanel } from "@/components/agenda/integration-panel";
@@ -48,6 +49,7 @@ export async function AjustesContent({
       )}
 
       <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
+        <LucasSettingsPanel />
         <GlassCard className="p-4 flex items-center justify-between gap-3 h-fit">
           <div>
             <p className="silk mb-1">tema</p>

@@ -1,4 +1,5 @@
 import { CuidadoPersonalPanel } from "@/components/cuidado-personal/cuidado-personal-panel";
+import { SunscreenPanel } from "@/components/cuidado-personal/sunscreen-panel";
 import {
   fetchPersonalCareRoutines,
   fetchPersonalCareSteps,
@@ -10,5 +11,10 @@ export async function CuidadoPersonalPageContent() {
     fetchPersonalCareSteps(),
   ]);
 
-  return <CuidadoPersonalPanel routines={routines} steps={steps} />;
+  return (
+    <div className="grid gap-4">
+      <SunscreenPanel />
+      <CuidadoPersonalPanel routines={routines} steps={steps} />
+    </div>
+  );
 }

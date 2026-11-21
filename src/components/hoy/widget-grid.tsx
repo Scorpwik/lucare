@@ -31,60 +31,33 @@ import { EmptyState } from "@/components/lucare/empty-state";
 import { ErrorState } from "@/components/lucare/error-state";
 import { LoadingState } from "@/components/lucare/loading-state";
 import { LcButton } from "@/components/lucare/lc-button";
-import { Eye, EyeOff, GripVertical } from "lucide-react";
+import { EyeOff, GripVertical, X } from "lucide-react";
 import { widgetSpanClasses } from "@/lib/widget-spans";
 import { useDndReady } from "@/lib/use-client-time";
+import { WidgetTileShell } from "@/components/hoy/widget-tile-shell";
+import { WidgetCatalogPanel } from "@/components/hoy/widget-catalog-panel";
 
 type Props = {
   childrenMap: Record<WidgetKey, React.ReactNode>;
   initialWidgets: DashboardWidget[];
+  personalize: boolean;
 };
-
-function StaticTile({
-  id,
-  visible,
-  onToggle,
-  children,
-}: {
-  id: WidgetKey;
-  visible: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={widgetSpanClasses(id)}>
-      <div className="relative group h-full min-h-0">
-        <div className="absolute -top-1 -right-1 z-10 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-          <LcButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2"
-            aria-label={visible ? "Ocultar widget" : "Mostrar widget"}
-            onClick={onToggle}
-          >
-            {visible ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-          </LcButton>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 function SortableTile({
   id,
   visible,
   onToggle,
+  personalize,
   children,
 }: {
   id: WidgetKey;
   visible: boolean;
   onToggle: () => void;
+  personalize: boolean;
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
+    useSortable({ id, disabled: !personalize });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -92,44 +65,83 @@ function SortableTile({
     opacity: visible ? 1 : 0.45,
   };
 
+  const toolbar = (
+    <>
+      <LcButton
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-7 px-2 bg-surface/90"
+        aria-label="Ocultar widget"
+        onClick={onToggle}
+      >
+        {personalize ? <X className="size-3.5" /> : <EyeOff className="size-3.5" />}
+      </LcButton>
+      <LcButton
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-7 px-2 cursor-grab active:cursor-grabbing bg-surface/90"
+        aria-label="Reordenar"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-3.5" />
+      </LcButton>
+    </>
+  );
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={`${widgetSpanClasses(id)} ${isDragging ? "z-10" : ""}`}
     >
-      <div className="relative group h-full min-h-0">
-        <div className="absolute -top-1 -right-1 z-10 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-          <LcButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2"
-            aria-label={visible ? "Ocultar widget" : "Mostrar widget"}
-            onClick={onToggle}
-          >
-            {visible ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-          </LcButton>
-          <LcButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 cursor-grab active:cursor-grabbing"
-            aria-label="Reordenar"
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical className="size-3.5" />
-          </LcButton>
-        </div>
+      <WidgetTileShell widgetKey={id} personalize={personalize} toolbar={toolbar}>
         {children}
-      </div>
+      </WidgetTileShell>
+    </div>
+  );
+}
+
+function StaticTile({
+  id,
+  visible,
+  onToggle,
+  personalize,
+  children,
+}: {
+  id: WidgetKey;
+  visible: boolean;
+  onToggle: () => void;
+  personalize: boolean;
+  children: React.ReactNode;
+}) {
+  const toolbar = personalize ? (
+    <LcButton
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="h-7 px-2 bg-surface/90"
+      aria-label="Ocultar widget"
+      onClick={onToggle}
+    >
+      <X className="size-3.5" />
+    </LcButton>
+  ) : null;
+
+  return (
+    <div className={widgetSpanClasses(id)} style={{ opacity: visible ? 1 : 0.45 }}>
+      <WidgetTileShell widgetKey={id} personalize={personalize} toolbar={toolbar}>
+        {children}
+      </WidgetTileShell>
     </div>
   );
 }
 
 function WidgetGridBody({
   dndReady,
+  personalize,
   visibleWidgets,
   orderedKeys,
   childrenMap,
@@ -138,6 +150,7 @@ function WidgetGridBody({
   onToggle,
 }: {
   dndReady: boolean;
+  personalize: boolean;
   visibleWidgets: DashboardWidget[];
   orderedKeys: WidgetKey[];
   childrenMap: Record<WidgetKey, React.ReactNode>;
@@ -148,11 +161,12 @@ function WidgetGridBody({
   const grid = (
     <div className="lc-hoy-widget-grid grid grid-flow-row-dense items-stretch grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6 xl:gap-5 3xl:grid-cols-12 3xl:gap-6 auto-rows-min lg:auto-rows-[minmax(10.5rem,auto)] xl:auto-rows-[minmax(11rem,auto)]">
       {visibleWidgets.map((w) =>
-        dndReady ? (
+        dndReady && personalize ? (
           <SortableTile
             key={w.widget_key}
             id={w.widget_key}
             visible={w.visible}
+            personalize={personalize}
             onToggle={() => onToggle(w.widget_key)}
           >
             {childrenMap[w.widget_key]}
@@ -162,6 +176,7 @@ function WidgetGridBody({
             key={w.widget_key}
             id={w.widget_key}
             visible={w.visible}
+            personalize={personalize}
             onToggle={() => onToggle(w.widget_key)}
           >
             {childrenMap[w.widget_key]}
@@ -170,7 +185,7 @@ function WidgetGridBody({
       )}
     </div>
   );
-  if (!dndReady) return grid;
+  if (!dndReady || !personalize) return grid;
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <SortableContext items={orderedKeys} strategy={rectSortingStrategy}>
@@ -180,7 +195,7 @@ function WidgetGridBody({
   );
 }
 
-export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
+export function WidgetGrid({ childrenMap, initialWidgets, personalize }: Props) {
   const dndReady = useDndReady();
   const demo = isDemoModeClient();
   const [widgets, setWidgets] = React.useState(() =>
@@ -211,14 +226,6 @@ export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
     () =>
       [...widgets]
         .filter((w) => w.visible)
-        .sort((a, b) => a.sort_order - b.sort_order),
-    [widgets],
-  );
-
-  const hiddenWidgets = React.useMemo(
-    () =>
-      [...widgets]
-        .filter((w) => !w.visible)
         .sort((a, b) => a.sort_order - b.sort_order),
     [widgets],
   );
@@ -289,21 +296,31 @@ export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
     return (
       <EmptyState
         title="Sin widgets"
-        description="No hay widgets en tu panel. Inicia sesión de nuevo o contacta soporte."
+        description="No hay widgets en tu panel. Usa Personalizar para añadir widgets."
       />
     );
   }
 
   return (
     <div className="space-y-4" aria-busy={saving}>
+      {personalize && (
+        <WidgetCatalogPanel
+          widgets={widgets}
+          onAdded={() => void reload()}
+          saving={saving}
+          setSaving={setSaving}
+        />
+      )}
+
       {visibleWidgets.length === 0 ? (
         <EmptyState
           title="Panel vacío"
-          description="Todos los widgets están ocultos. Restáuralos abajo con el icono de ojo."
+          description="Activa Personalizar y elige widgets del catálogo."
         />
       ) : (
         <WidgetGridBody
           dndReady={dndReady}
+          personalize={personalize}
           visibleWidgets={visibleWidgets}
           orderedKeys={orderedKeys}
           childrenMap={childrenMap}
@@ -311,31 +328,6 @@ export function WidgetGrid({ childrenMap, initialWidgets }: Props) {
           onDragEnd={onDragEnd}
           onToggle={toggle}
         />
-      )}
-
-      {hiddenWidgets.length > 0 && (
-        <div className="border border-dashed border-border rounded-[var(--r)] p-3">
-          <p className="silk text-xs mb-2">widgets ocultos</p>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {hiddenWidgets.map((w) => (
-              <li
-                key={w.widget_key}
-                className="flex items-center justify-between gap-2 text-sm border border-border rounded-[var(--pill)] px-3 py-2 bg-surface"
-              >
-                <span className="font-mono text-xs text-muted-foreground">{w.widget_key}</span>
-                <LcButton
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  aria-label="Mostrar widget"
-                  onClick={() => toggle(w.widget_key)}
-                >
-                  <Eye className="size-3.5" />
-                </LcButton>
-              </li>
-            ))}
-          </ul>
-        </div>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  addDashboardWidget,
   fetchDashboardWidgets,
   reorderWidgets,
   updateWidgetVisibility,
@@ -19,6 +20,7 @@ export async function GET() {
 type PatchBody = {
   reorder?: WidgetKey[];
   visibility?: { key: WidgetKey; visible: boolean };
+  add?: WidgetKey;
 };
 
 export async function PATCH(request: Request) {
@@ -35,6 +37,9 @@ export async function PATCH(request: Request) {
     }
     if (body.visibility) {
       await updateWidgetVisibility(body.visibility.key, body.visibility.visible);
+    }
+    if (body.add) {
+      await addDashboardWidget(body.add);
     }
     return NextResponse.json({ ok: true });
   } catch (err) {

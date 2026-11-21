@@ -47,6 +47,52 @@ export async function clientToggleWidget(key: WidgetKey, visible: boolean): Prom
   }
 }
 
+export async function clientAddWidget(key: WidgetKey): Promise<void> {
+  if (isDemoModeClient()) {
+    setDemoState((prev) => {
+      const exists = prev.widgets.some((w) => w.widget_key === key);
+      if (exists) {
+        return {
+          ...prev,
+          widgets: prev.widgets.map((w) =>
+            w.widget_key === key
+              ? { ...w, visible: true, updated_at: new Date().toISOString() }
+              : w,
+          ),
+        };
+      }
+      const maxOrder = prev.widgets.reduce((m, w) => Math.max(m, w.sort_order), -1);
+      const t = new Date().toISOString();
+      return {
+        ...prev,
+        widgets: [
+          ...prev.widgets,
+          {
+            id: crypto.randomUUID(),
+            user_id: prev.userId,
+            widget_key: key,
+            visible: true,
+            sort_order: maxOrder + 1,
+            created_at: t,
+            updated_at: t,
+          },
+        ],
+      };
+    });
+    return;
+  }
+  const res = await fetch("/api/dashboard/widgets", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ add: key }),
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as { error?: string } | null;
+    toast.error(friendlyError(data?.error, "No se pudo añadir el widget"));
+    throw new Error(data?.error ?? "patch add");
+  }
+}
+
 export async function clientReorderWidgets(orderedKeys: WidgetKey[]): Promise<void> {
   if (isDemoModeClient()) {
     setDemoState((prev) => ({
