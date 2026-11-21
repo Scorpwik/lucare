@@ -1,4 +1,4 @@
-import { google } from "@ai-sdk/google";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { LanguageModel } from "ai";
 import {
   GEMINI_FALLBACK_MODEL,
@@ -7,6 +7,23 @@ import {
   resolveAiGatewayModelId,
   resolveGeminiModelId,
 } from "@/lib/env";
+
+/** fetch con registro de tiempos/estado (sin URL ni cabeceras, para no exponer la clave). */
+const loggingFetch: typeof fetch = async (input, init) => {
+  const started = Date.now();
+  try {
+    const res = await fetch(input, init);
+    console.info(`[ai:gemini-http] status=${res.status} headers en ${Date.now() - started} ms`);
+    return res;
+  } catch (err) {
+    console.error(
+      `[ai:gemini-http] fallo de red tras ${Date.now() - started} ms: ${err instanceof Error ? err.name + ": " + err.message : String(err)}`,
+    );
+    throw err;
+  }
+};
+
+const google = createGoogleGenerativeAI({ fetch: loggingFetch });
 
 export type AiModelCandidate = {
   provider: "gemini" | "gateway";
@@ -56,7 +73,7 @@ export type AiCallOptions = {
 };
 
 /** Tiempo máximo por intento, para no agotar el límite de la función en un solo proveedor. */
-const ATTEMPT_TIMEOUT_MS = 25_000;
+const ATTEMPT_TIMEOUT_MS = 20_000;
 
 export async function runWithAiFallback<T>(
   label: string,

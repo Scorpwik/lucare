@@ -63,8 +63,8 @@ function parseEnv() {
  */
 export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
 
-/** Alias de Google que siempre apunta al Flash vigente; respaldo si el modelo falla. */
-export const GEMINI_FALLBACK_MODEL = "gemini-flash-latest";
+/** Alias de Google al Flash-Lite vigente (más rápido); respaldo si el modelo principal falla. */
+export const GEMINI_FALLBACK_MODEL = "gemini-flash-lite-latest";
 
 /** Modelo por defecto del AI Gateway — económico y verificado en el catálogo. */
 export const DEFAULT_AI_GATEWAY_MODEL = "amazon/nova-micro";
