@@ -1,3 +1,16 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { MoreHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const primaryTabs = [
   { href: "/hoy", label: "Hoy" },
@@ -15,6 +28,12 @@ const moreLinks = [
 ] as const;
 
 export function MobileTabBar() {
+  const pathname = usePathname();
+
+  return (
+    <nav
+      className="lg:hidden fixed left-3 right-3 bottom-3 z-40 grid grid-cols-5 h-[58px] rounded-[var(--pill)] border border-border bg-glass backdrop-blur-[var(--blur-strong)] saturate-[1.2] shadow-[var(--shadow-3)] px-1"
+      aria-label="Navegación principal"
     >
       {primaryTabs.map((tab) => {
         const active =
@@ -24,6 +43,30 @@ export function MobileTabBar() {
         return (
           <Link
             key={tab.href}
+            href={tab.href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "flex flex-col items-center justify-center font-mono text-[9px] leading-tight text-muted-foreground rounded-[var(--pill)]",
+              active && "text-foreground",
+            )}
+          >
+            {active && (
+              <span
+                className="w-[7px] h-[7px] rounded-full bg-led mb-1 shadow-[0_0_8px_var(--led)]"
+                aria-hidden
+              />
+            )}
+            {tab.label}
+          </Link>
+        );
+      })}
+      <Sheet>
+        <SheetTrigger
+          className={cn(
+            "flex flex-col items-center justify-center font-mono text-[9px] text-muted-foreground rounded-[var(--pill)]",
+            moreLinks.some((l) => pathname.startsWith(l.href)) && "text-foreground",
+          )}
+        >
           <MoreHorizontal className="size-4 mb-0.5" aria-hidden />
           Más
         </SheetTrigger>
@@ -40,3 +83,11 @@ export function MobileTabBar() {
                 >
                   {link.label}
                 </Link>
+              </li>
+            ))}
+          </ul>
+        </SheetContent>
+      </Sheet>
+    </nav>
+  );
+}

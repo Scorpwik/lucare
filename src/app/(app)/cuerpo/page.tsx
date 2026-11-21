@@ -1,21 +1,19 @@
-import { CuerpoPanel } from "@/components/cuerpo/cuerpo-panel";
-import { fetchBodyMetrics, fetchProgressPhotos } from "@/lib/data/body";
+import { Suspense } from "react";
+import { AsyncPageFallback } from "@/components/layout/async-page-fallback";
+import { CuerpoPageContent } from "@/components/cuerpo/cuerpo-page-content";
 
 export const metadata = { title: "Cuerpo" };
 
-export default async function CuerpoPage() {
-  const [metrics, photos] = await Promise.all([
-    fetchBodyMetrics(),
-    fetchProgressPhotos(),
-  ]);
-
+export default function CuerpoPage() {
   return (
     <div>
       <header className="mb-4">
         <p className="silk">módulo · cuerpo</p>
         <h1 className="font-dot font-black text-4xl">Cuerpo</h1>
       </header>
-      <CuerpoPanel initialMetrics={metrics} initialPhotos={photos} />
+      <Suspense fallback={<AsyncPageFallback />}>
+        <CuerpoPageContent />
+      </Suspense>
     </div>
   );
 }

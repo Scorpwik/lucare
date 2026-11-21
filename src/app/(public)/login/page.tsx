@@ -1,3 +1,15 @@
+"use client";
+
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { GlassCard } from "@/components/lucare/glass-card";
+import { LcButton } from "@/components/lucare/lc-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isDemoModeClient } from "@/lib/env";
+import { toast } from "sonner";
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = React.useState("");
@@ -7,6 +19,20 @@ export default function LoginPage() {
   const demo = isDemoModeClient();
 
   const demoLogin = async () => {
+    setLoading(true);
+    try {
+      await fetch("/api/auth/demo", { method: "POST" });
+      router.replace("/hoy");
+      router.refresh();
+    } catch {
+      document.cookie = "lucare-demo-session=1; path=/; max-age=2592000; SameSite=Lax";
+      router.replace("/hoy");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const magicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = getSupabaseBrowserClient();
     if (!supabase) {
@@ -14,6 +40,14 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    setLoading(false);
+    if (error) toast.error(error.message);
     else toast.success("Revisa tu correo para el enlace mágico.");
   };
 
@@ -50,6 +84,24 @@ export default function LoginPage() {
   return (
     <div className="min-h-dvh flex items-center justify-center p-4">
       <GlassCard className="w-full max-w-md p-6 space-y-6" raised>
+        <div>
+          <p className="silk">acceso</p>
+          <h1 className="font-dot font-black text-4xl leading-none mt-1">LuCare</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Tu panel de salud en Ecuador (America/Guayaquil).
+          </p>
+        </div>
+
+        {demo && (
+          <LcButton
+            type="button"
+            variant="pri"
+            className="w-full"
+            disabled={loading}
+            onClick={demoLogin}
+          >
+            Entrar en modo demo
+          </LcButton>
         )}
 
         {!demo && (
@@ -123,3 +175,11 @@ export default function LoginPage() {
         )}
 
         {demo && (
+          <p className="text-xs font-mono text-muted-foreground text-center">
+            LUCARE_DEMO_MODE activo — sin claves de Supabase.
+          </p>
+        )}
+      </GlassCard>
+    </div>
+  );
+}

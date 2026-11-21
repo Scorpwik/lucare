@@ -5,6 +5,7 @@ import { isDemoModeClient } from "@/lib/env";
 import type { DashboardWidget, WidgetKey } from "@/lib/types";
 
 export function clientGetWidgets(): DashboardWidget[] {
+  return getDemoState().widgets.sort((a, b) => a.sort_order - b.sort_order);
 }
 
 export function clientToggleWidget(key: WidgetKey, visible: boolean): void {

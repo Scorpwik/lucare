@@ -1,3 +1,21 @@
+export type ThemePreference = "light" | "dark" | "system";
+
+export type SkincarePeriod = "am" | "pm" | "custom";
+
+export type LogType =
+  | "skincare_step"
+  | "medication"
+  | "appointment"
+  | "custom";
+
+export type CalendarProvider = "google_calendar" | "notion_deberes";
+
+export type LinkStatus = "disconnected" | "connected" | "error" | "syncing";
+
+export type WidgetKey =
+  | "saludo"
+  | "bloqueador"
+  | "rutina_am"
   | "pastillas"
   | "citas"
   | "agenda"
@@ -11,6 +29,170 @@
 
 export interface Profile {
   id: string;
+  display_name: string | null;
+  timezone: string;
+  active_hours_start: string;
+  active_hours_end: string;
+  theme: ThemePreference;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DashboardWidget {
+  id: string;
+  user_id: string;
+  widget_key: WidgetKey;
+  visible: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PushSubscription {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface SkincareRoutine {
+  id: string;
+  user_id: string;
+  name: string;
+  period: SkincarePeriod;
+  sort_order: number;
+  reminder_enabled: boolean;
+  reminder_start_time: string | null;
+  reminder_end_time: string | null;
+  reminder_interval_minutes: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SkincareStep {
+  id: string;
+  user_id: string;
+  routine_id: string;
+  title: string;
+  product_name: string | null;
+  scheduled_time: string | null;
+  sort_order: number;
+  reminder_enabled: boolean;
+  reminder_start_time: string | null;
+  reminder_end_time: string | null;
+  reminder_interval_minutes: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Medication {
+  id: string;
+  user_id: string;
+  name: string;
+  dosage: string | null;
+  notes: string | null;
+  reminder_enabled: boolean;
+  reminder_start_time: string | null;
+  reminder_end_time: string | null;
+  reminder_interval_minutes: number | null;
+  reminder_times: string[] | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MedicalAppointment {
+  id: string;
+  user_id: string;
+  title: string;
+  provider: string | null;
+  location: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  notes: string | null;
+  reminder_enabled: boolean;
+  reminder_minutes_before: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CareLog {
+  id: string;
+  user_id: string;
+  log_type: LogType;
+  reference_id: string | null;
+  logged_at: string;
+  notes: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface Task {
+  id: string;
+  user_id: string;
+  title: string;
+  due_at: string | null;
+  completed: boolean;
+  module_source: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarLink {
+  id: string;
+  user_id: string;
+  provider: CalendarProvider;
+  status: LinkStatus;
+  external_account_id: string | null;
+  metadata: Record<string, unknown>;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExternalCalendarEvent {
+  id: string;
+  user_id: string;
+  provider: string;
+  external_id: string;
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  source_label: string;
+  raw: Record<string, unknown>;
+  synced_at: string;
+}
+
+export interface ExternalNotionTask {
+  id: string;
+  user_id: string;
+  external_id: string;
+  title: string;
+  due_at: string | null;
+  status: string | null;
+  raw: Record<string, unknown>;
+  synced_at: string;
+}
+
+export interface ScheduledReminder {
+  id: string;
+  user_id: string;
+  source_type: string;
+  source_id: string;
+  title: string;
+  body: string | null;
+  fire_at: string;
+  sent_at: string | null;
+  created_at: string;
+}
+
+export interface ReminderWindow {
+  startTime: string;
+  endTime: string;
+  intervalMinutes: number;
   referenceDate?: Date;
   timezone?: string;
 }

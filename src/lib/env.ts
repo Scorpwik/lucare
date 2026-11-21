@@ -1,3 +1,60 @@
+import { z } from "zod";
+
+const envSchema = z.object({
+  NEXT_PUBLIC_SUPABASE_URL: z.string().optional().default(""),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional().default(""),
+  NEXT_PUBLIC_LUCARE_DEMO_MODE: z
+    .string()
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  LUCARE_DEMO_MODE: z
+    .string()
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  NOTION_CLIENT_ID: z.string().optional(),
+  NOTION_CLIENT_SECRET: z.string().optional(),
+  INTEGRATION_SYNC_SECRET: z.string().optional(),
+});
+
+function parseEnv() {
+  return envSchema.parse({
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    NEXT_PUBLIC_LUCARE_DEMO_MODE: process.env.NEXT_PUBLIC_LUCARE_DEMO_MODE,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    LUCARE_DEMO_MODE: process.env.LUCARE_DEMO_MODE,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+    VAPID_SUBJECT: process.env.VAPID_SUBJECT,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    NOTION_CLIENT_ID: process.env.NOTION_CLIENT_ID,
+    NOTION_CLIENT_SECRET: process.env.NOTION_CLIENT_SECRET,
+    INTEGRATION_SYNC_SECRET: process.env.INTEGRATION_SYNC_SECRET,
+  });
+}
+
+export const env = parseEnv();
+
+export const TIMEZONE = "America/Guayaquil";
+
+export function supabaseConfigured(): boolean {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  return Boolean(
+    url &&
+      key &&
+      url.length > 0 &&
+      key.length > 0 &&
+      !url.includes("tu-proyecto"),
+  );
 }
 
 export function isDemoMode(): boolean {
