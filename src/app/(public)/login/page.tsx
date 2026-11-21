@@ -1,3 +1,16 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { GlassCard } from "@/components/lucare/glass-card";
+import { LcButton } from "@/components/lucare/lc-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isDemoModeClient } from "@/lib/env";
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = React.useState("");
@@ -7,6 +20,20 @@ export default function LoginPage() {
   const demo = isDemoModeClient();
 
   const demoLogin = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/demo", { method: "POST" });
+      if (!res.ok) throw new Error("No se pudo iniciar demo");
+      router.replace("/hoy");
+      router.refresh();
+    } catch {
+      toast.error("Error al entrar en modo demo");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const magicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = getSupabaseBrowserClient();
     if (!supabase) {
@@ -14,6 +41,14 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    setLoading(false);
+    if (error) toast.error(error.message);
     else toast.success("Revisa tu correo para el enlace mágico.");
   };
 
@@ -50,6 +85,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-dvh flex items-center justify-center p-4">
       <GlassCard className="w-full max-w-md p-6 space-y-6" raised>
+        <div>
+          <p className="silk">acceso · LuCare</p>
+          <h1 className="font-dot font-black text-4xl mt-1">Entrar</h1>
+        </div>
+
+        {demo && (
+          <LcButton type="button" variant="pri" className="w-full" disabled={loading} onClick={demoLogin}>
+            Entrar en modo demo
+          </LcButton>
         )}
 
         {!demo && (
@@ -123,3 +167,17 @@ export default function LoginPage() {
         )}
 
         {demo && (
+          <p className="text-xs text-muted-foreground text-center">
+            Modo demo activo — datos locales, sin Supabase.
+          </p>
+        )}
+
+        <p className="text-center text-xs text-muted-foreground">
+          <Link href="/" className="underline-offset-2 hover:underline">
+            Volver al inicio
+          </Link>
+        </p>
+      </GlassCard>
+    </div>
+  );
+}

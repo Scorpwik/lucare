@@ -20,6 +20,27 @@ export function clientUpsertMedication(
   setDemoState((prev) => {
     const t = new Date().toISOString();
     if (id) {
+      return {
+        ...prev,
+        medications: prev.medications.map((m) =>
+          m.id === id ? { ...m, ...input, updated_at: t } : m,
+        ),
+      };
+    }
+    const med: Medication = {
+      id: crypto.randomUUID(),
+      user_id: prev.userId,
+      is_active: true,
+      reminder_times: input.reminder_times ?? null,
+      dosage: input.dosage ?? null,
+      notes: input.notes ?? null,
+      reminder_start_time: input.reminder_start_time ?? null,
+      reminder_end_time: input.reminder_end_time ?? null,
+      reminder_interval_minutes: input.reminder_interval_minutes ?? null,
+      created_at: t,
+      updated_at: t,
+      ...input,
+    };
     return { ...prev, medications: [...prev.medications, med] };
   });
 }

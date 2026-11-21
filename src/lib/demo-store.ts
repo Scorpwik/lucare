@@ -27,6 +27,11 @@ const STORAGE_KEY = "lucare-demo-v2";
 
 export interface DemoState {
   userId: string;
+  displayName: string;
+  widgets: DashboardWidget[];
+  routines: SkincareRoutine[];
+  steps: SkincareStep[];
+  medications: Medication[];
   appointments: MedicalAppointment[];
   tasks: Task[];
   externalEvents: ExternalCalendarEvent[];
@@ -47,19 +52,209 @@ export interface DemoState {
 }
 
 function uid(): string {
-    "rutina_am",
-    "pastillas",
-    "citas",
-    "gimnasio",
-    "cuerpo_resumen",
-    "sueno",
-    "habitos_racha",
-    "animo",
-    "cuidado_personal",
-    "agenda",
-    "tareas",
+  return crypto.randomUUID();
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+const DEFAULT_WIDGET_KEYS: WidgetKey[] = [
+  "saludo",
+  "bloqueador",
+  "rutina_am",
+  "pastillas",
+  "citas",
+  "agenda",
+  "tareas",
+  "gimnasio",
+  "cuerpo_resumen",
+  "sueno",
+  "habitos_racha",
+  "animo",
+  "cuidado_personal",
+];
+
+function seedWidgets(): DashboardWidget[] {
+  const t = nowIso();
+  return DEFAULT_WIDGET_KEYS.map((widget_key, sort_order) => ({
+    id: uid(),
+    user_id: DEMO_USER_ID,
+    widget_key,
+    visible: true,
+    sort_order,
+    created_at: t,
+    updated_at: t,
+  }));
+}
+
+function seedSkincare(): { routines: SkincareRoutine[]; steps: SkincareStep[] } {
+  const t = nowIso();
+  const rid = uid();
+  const routines: SkincareRoutine[] = [
+    {
+      id: rid,
+      user_id: DEMO_USER_ID,
+      name: "Rutina AM",
+      period: "am",
+      sort_order: 0,
+      reminder_enabled: true,
+      reminder_start_time: "07:00",
+      reminder_end_time: "09:00",
+      reminder_interval_minutes: 30,
+      created_at: t,
+      updated_at: t,
+    },
   ];
+  const steps: SkincareStep[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      routine_id: rid,
+      title: "Limpiador suave",
+      product_name: "CeraVe",
+      scheduled_time: "07:30",
+      sort_order: 0,
+      reminder_enabled: false,
+      reminder_start_time: null,
+      reminder_end_time: null,
+      reminder_interval_minutes: null,
+      created_at: t,
+      updated_at: t,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      routine_id: rid,
+      title: "Protector solar",
+      product_name: "ISDIN",
+      scheduled_time: "08:00",
+      sort_order: 1,
+      reminder_enabled: false,
+      reminder_start_time: null,
+      reminder_end_time: null,
+      reminder_interval_minutes: null,
+      created_at: t,
+      updated_at: t,
+    },
   ];
+  return { routines, steps };
+}
+
+function seedMedications(): Medication[] {
+  const t = nowIso();
+  return [
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      name: "Vitamina D",
+      dosage: "2000 UI",
+      notes: null,
+      reminder_enabled: true,
+      reminder_start_time: "08:00",
+      reminder_end_time: "22:00",
+      reminder_interval_minutes: 720,
+      reminder_times: ["08:00", "20:00"],
+      is_active: true,
+      created_at: t,
+      updated_at: t,
+    },
+  ];
+}
+
+function seedAppointments(): MedicalAppointment[] {
+  const t = nowIso();
+  const next = new Date();
+  next.setDate(next.getDate() + 3);
+  next.setHours(10, 0, 0, 0);
+  return [
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      title: "Control dermatológico",
+      provider: "Dra. Méndez",
+      location: "Centro médico",
+      starts_at: next.toISOString(),
+      ends_at: null,
+      notes: null,
+      reminder_enabled: true,
+      reminder_minutes_before: 60,
+      created_at: t,
+      updated_at: t,
+    },
+  ];
+}
+
+function seedTasks(): Task[] {
+  const t = nowIso();
+  const due = new Date();
+  due.setHours(18, 0, 0, 0);
+  return [
+    {
+      id: uid(),
+      user_id: DEMO_USER_ID,
+      title: "Revisar agenda semanal",
+      due_at: due.toISOString(),
+      completed: false,
+      module_source: "manual",
+      created_at: t,
+      updated_at: t,
+    },
+  ];
+}
+
+function seedEvents(): ExternalCalendarEvent[] {
+  const t = nowIso();
+  const items: ExternalCalendarEvent[] = [];
+  const base = new Date();
+  base.setMinutes(0, 0, 0);
+
+  const gym = new Date(base);
+  gym.setHours(17, 0, 0, 0);
+  items.push({
+    id: uid(),
+    user_id: DEMO_USER_ID,
+    provider: "google_calendar",
+    external_id: "demo-gym",
+    title: "Gimnasio · pecho",
+    starts_at: gym.toISOString(),
+    ends_at: new Date(gym.getTime() + 90 * 60_000).toISOString(),
+    source_label: "Google",
+    synced_at: t,
+  });
+
+  const study = new Date(base);
+  study.setHours(20, 0, 0, 0);
+  items.push({
+    id: uid(),
+    user_id: DEMO_USER_ID,
+    provider: "notion_deberes",
+    external_id: "demo-hw",
+    title: "Entregar informe de cálculo",
+    starts_at: study.toISOString(),
+    ends_at: null,
+    source_label: "Notion",
+    synced_at: t,
+  });
+
+  const meet = new Date(base);
+  meet.setDate(meet.getDate() + 1);
+  meet.setHours(9, 30, 0, 0);
+  items.push({
+    id: uid(),
+    user_id: DEMO_USER_ID,
+    provider: "google_calendar",
+    external_id: "demo-meet",
+    title: "Reunión proyecto LuCare",
+    starts_at: meet.toISOString(),
+    ends_at: new Date(meet.getTime() + 45 * 60_000).toISOString(),
+    source_label: "Google",
+    synced_at: t,
+  });
+
+  return items.sort(
+    (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
 }
 
 function seedGym(): {
@@ -322,6 +517,10 @@ export function createDefaultDemoState(): DemoState {
   return {
     userId: DEMO_USER_ID,
     displayName: "Joshua",
+    widgets: seedWidgets(),
+    routines,
+    steps,
+    medications: seedMedications(),
     appointments: seedAppointments(),
     tasks: seedTasks(),
     externalEvents: seedEvents(),
@@ -342,3 +541,33 @@ export function createDefaultDemoState(): DemoState {
   };
 }
 
+let serverState: DemoState | null = null;
+
+export function getServerDemoState(): DemoState {
+  if (!serverState) serverState = createDefaultDemoState();
+  return serverState;
+}
+
+export function getDemoState(): DemoState {
+  if (typeof window === "undefined") return getServerDemoState();
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      return JSON.parse(raw) as DemoState;
+    } catch {
+      /* regenerar */
+    }
+  }
+  const fresh = createDefaultDemoState();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+  return fresh;
+}
+
+export function setDemoState(updater: (prev: DemoState) => DemoState): void {
+  const next = updater(getDemoState());
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } else {
+    serverState = next;
+  }
+}

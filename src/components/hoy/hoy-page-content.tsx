@@ -68,7 +68,11 @@ export async function HoyPageContent() {
         <CuidadoPersonalWidget />
       </Suspense>
     ),
-    agenda: <AgendaWidget />,
+    agenda: (
+      <Suspense fallback={<LoadingState />}>
+        <AgendaWidget />
+      </Suspense>
+    ),
     tareas: <TareasWidget />,
   };
 

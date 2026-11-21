@@ -1,3 +1,9 @@
+"use client";
+
+import * as React from "react";
+import type { MedicalAppointment, Medication, SkincareRoutine, SkincareStep } from "@/lib/types";
+import { GlassCard } from "@/components/lucare/glass-card";
+import { LcButton } from "@/components/lucare/lc-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -9,18 +15,37 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 type Props = {
+  routines: SkincareRoutine[];
+  steps: SkincareStep[];
+  medications: Medication[];
+  appointments: MedicalAppointment[];
+};
+
+export function CuidadoTabs({
+  routines: initialRoutines,
+  steps: initialSteps,
   medications: initialMeds,
   appointments: initialAppts,
 }: Props) {
   const router = useRouter();
-  const [tab, setTab] = React.useState<"rutinas" | "medicamentos" | "citas">(
-    "rutinas",
-  );
+  const [tab, setTab] = React.useState<"rutinas" | "medicamentos" | "citas">("rutinas");
   const [routines, setRoutines] = React.useState(initialRoutines);
   const [steps] = React.useState(initialSteps);
   const [meds, setMeds] = React.useState(initialMeds);
   const [appts, setAppts] = React.useState(initialAppts);
   const [editApptId, setEditApptId] = React.useState<string | null>(null);
+
+  const [routineForm, setRoutineForm] = React.useState({
+    name: "",
+    period: "am" as const,
+    reminder_enabled: false,
+  });
+
+  const [medForm, setMedForm] = React.useState({
+    name: "",
+    dosage: "",
+    reminder_enabled: true,
+  });
 
   const [apptForm, setApptForm] = React.useState({
     title: "",
@@ -32,11 +57,6 @@ type Props = {
     reminder_enabled: true,
     reminder_minutes_before: 60,
   });
-
-  const [routineForm, setRoutineForm] = React.useState({
-    name: "",
-    });
-  };
 
   const resetApptForm = () => {
     setEditApptId(null);
@@ -50,6 +70,32 @@ type Props = {
       reminder_enabled: true,
       reminder_minutes_before: 60,
     });
+  };
+
+  const saveRoutine = (e: React.FormEvent) => {
+    e.preventDefault();
+    clientUpsertRoutine(null, {
+      name: routineForm.name,
+      period: routineForm.period,
+      reminder_enabled: routineForm.reminder_enabled,
+    });
+    if (isDemoModeClient()) setRoutines(getDemoState().routines);
+    toast.success("Rutina guardada");
+    setRoutineForm({ name: "", period: "am", reminder_enabled: false });
+    router.refresh();
+  };
+
+  const saveMed = (e: React.FormEvent) => {
+    e.preventDefault();
+    clientUpsertMedication(null, {
+      name: medForm.name,
+      dosage: medForm.dosage || null,
+      reminder_enabled: medForm.reminder_enabled,
+    });
+    if (isDemoModeClient()) setMeds(getDemoState().medications);
+    toast.success("Medicamento guardado");
+    setMedForm({ name: "", dosage: "", reminder_enabled: true });
+    router.refresh();
   };
 
   const saveAppt = async (e: React.FormEvent) => {
@@ -101,9 +147,103 @@ type Props = {
     });
   };
 
-  const saveMed = (e: React.FormEvent) => {
-    e.preventDefault();
-    clientUpsertMedication(null, {
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {(["rutinas", "medicamentos", "citas"] as const).map((t) => (
+          <LcButton
+            key={t}
+            type="button"
+            size="sm"
+            variant={tab === t ? "pri" : "ghost"}
+            onClick={() => setTab(t)}
+          >
+            {t === "rutinas" ? "Rutinas" : t === "medicamentos" ? "Medicamentos" : "Citas"}
+          </LcButton>
+        ))}
+      </div>
+
+      {tab === "rutinas" && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <GlassCard className="p-4">
+            <p className="silk mb-3">rutinas activas</p>
+            <ul className="space-y-2 text-sm">
+              {routines.map((r) => (
+                <li key={r.id} className="border-b border-border pb-2">
+                  <span className="font-medium">{r.name}</span>
+                  <span className="font-mono text-xs text-muted-foreground ml-2">{r.period}</span>
+                  <ul className="mt-1 text-muted-foreground">
+                    {steps
+                      .filter((s) => s.routine_id === r.id)
+                      .map((s) => (
+                        <li key={s.id}>· {s.title}</li>
+                      ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          </GlassCard>
+          <GlassCard className="p-4">
+            <p className="silk mb-3">nueva rutina</p>
+            <form className="space-y-3" onSubmit={saveRoutine}>
+              <div>
+                <Label htmlFor="r-name">Nombre</Label>
+                <Input
+                  id="r-name"
+                  required
+                  value={routineForm.name}
+                  onChange={(e) => setRoutineForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </div>
+              <LcButton type="submit" variant="pri" className="w-full">
+                Guardar rutina
+              </LcButton>
+            </form>
+          </GlassCard>
+        </div>
+      )}
+
+      {tab === "medicamentos" && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <GlassCard className="p-4">
+            <p className="silk mb-3">medicamentos</p>
+            <ul className="space-y-2 text-sm">
+              {meds.map((m) => (
+                <li key={m.id} className="border-b border-border pb-2">
+                  <span className="font-medium">{m.name}</span>
+                  {m.dosage && (
+                    <span className="text-muted-foreground ml-2">{m.dosage}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </GlassCard>
+          <GlassCard className="p-4">
+            <p className="silk mb-3">nuevo medicamento</p>
+            <form className="space-y-3" onSubmit={saveMed}>
+              <div>
+                <Label htmlFor="m-name">Nombre</Label>
+                <Input
+                  id="m-name"
+                  required
+                  value={medForm.name}
+                  onChange={(e) => setMedForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="m-dose">Dosis</Label>
+                <Input
+                  id="m-dose"
+                  value={medForm.dosage}
+                  onChange={(e) => setMedForm((f) => ({ ...f, dosage: e.target.value }))}
+                />
+              </div>
+              <LcButton type="submit" variant="pri" className="w-full">
+                Guardar medicamento
+              </LcButton>
+            </form>
+          </GlassCard>
+        </div>
       )}
 
       {tab === "citas" && (
@@ -221,3 +361,4 @@ type Props = {
       )}
     </div>
   );
+}

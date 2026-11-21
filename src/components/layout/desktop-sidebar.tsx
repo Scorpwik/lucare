@@ -1,3 +1,7 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/hoy", label: "Hoy" },
@@ -10,6 +14,12 @@ const navItems = [
   { href: "/agenda", label: "Agenda" },
   { href: "/ajustes", label: "Ajustes" },
 ] as const;
+
+export function DesktopSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside className="hidden lg:flex w-56 shrink-0 flex-col border-r border-border bg-surface/50 px-3 py-4 min-h-dvh">
       <div className="font-dot font-black text-[22px] leading-none mb-1 px-3">
         LuCare
       </div>
@@ -23,3 +33,18 @@ const navItems = [
           return (
             <Link
               key={item.href}
+              href={item.href}
+              className={`rounded-[var(--pill)] px-3 py-2 text-sm transition-colors ${
+                active
+                  ? "bg-foreground text-background font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
